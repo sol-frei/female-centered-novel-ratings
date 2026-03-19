@@ -367,11 +367,11 @@ def html_to_png_bytes(html_str):
 # 生成图片按钮
 # ─────────────────────────────────────────────
 
-if st.button("🖼️ 生成评鉴图片"):
+if st.button("生成图片"):
     if not book_name:
         st.warning("请先填写书名！")
     else:
-        with st.spinner("正在生成评鉴证书图片，请稍候..."):
+        with st.spinner("正在生成图片，请稍候..."):
             score_color = (
                 "#b03a2e" if sum_rate < 4 else
                 "#a04000" if sum_rate < 6 else
