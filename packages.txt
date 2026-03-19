@@ -1,1 +1,5 @@
-wkhtmltopdf
+libxrender1
+libxext6
+libfontconfig1
+xfonts-75dpi
+xfonts-base
