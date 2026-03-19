@@ -1,14 +1,22 @@
 import os
 import subprocess
 import sys
+import shutil
 
 # ── Auto-install wkhtmltopdf on Streamlit Cloud ──────────────
+def _find_wkhtmltoimage():
+    """Return the path to wkhtmltoimage, or None if not found."""
+    for p in ["/usr/local/bin/wkhtmltoimage", "/usr/bin/wkhtmltoimage"]:
+        if os.path.exists(p):
+            return p
+    return shutil.which("wkhtmltoimage")
+
 def _install_wkhtmltopdf():
-    if os.path.exists("/usr/local/bin/wkhtmltoimage"):
+    if _find_wkhtmltoimage():
         return
     deb_url = "https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.bullseye_amd64.deb"
     deb_path = "/tmp/wkhtmltox.deb"
-    subprocess.run(["wget", "-q", "-O", deb_path, deb_url], check=True)
+    subprocess.run(["wget", "-q", "-O", deb_path, deb_url], check=True, timeout=120)
     subprocess.run(["dpkg", "-i", deb_path], capture_output=True)
     subprocess.run(["apt-get", "install", "-f", "-y"], capture_output=True)
 
@@ -29,222 +37,105 @@ import random
 
 st.set_page_config(page_title="女主无CP评分系统", page_icon="📖", layout="wide")
 
-# ─────────────────────────────────────────────
-# Custom CSS
-# ─────────────────────────────────────────────
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
-
-:root {
-    --gold: #C9A84C;
-    --gold-light: #E8D48B;
-    --dark: #1A1A1A;
-    --panel: #242424;
-}
-
-.stApp { background-color: #111111; }
-h1, h2, h3 { font-family: 'Noto Serif SC', serif !important; color: var(--gold) !important; }
-
-.stTextInput > label, .stNumberInput > label,
-.stTextArea > label, .stRadio > label { color: #c8c8c8 !important; font-family: 'Noto Serif SC', serif; }
-
-.dimension-header {
-    background: linear-gradient(90deg, #2a2200, #1a1a1a);
-    border-left: 3px solid var(--gold);
-    padding: 8px 16px;
-    margin: 18px 0 6px 0;
-    font-family: 'Noto Serif SC', serif;
-    font-size: 1.05rem;
-    color: var(--gold-light);
-    letter-spacing: 2px;
-}
-
-.score-badge {
-    display: inline-block;
-    background: linear-gradient(135deg, #2a2000, #1a1400);
-    border: 1px solid var(--gold);
-    border-radius: 4px;
-    padding: 2px 10px;
-    color: var(--gold-light);
-    font-size: 0.85rem;
-    margin-left: 8px;
-}
-
-div[data-testid="stButton"] > button {
-    background: linear-gradient(135deg, #2a2000, #3a3000) !important;
-    color: var(--gold-light) !important;
-    border: 1px solid var(--gold) !important;
-    font-family: 'Noto Serif SC', serif !important;
-    letter-spacing: 2px;
-    padding: 0.5rem 2rem;
-    transition: all 0.3s ease;
-}
-
-div[data-testid="stButton"] > button:hover {
-    background: linear-gradient(135deg, #3a3000, #4a4000) !important;
-    box-shadow: 0 0 15px rgba(201,168,76,0.4) !important;
-}
-</style>
-""", unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
-# Sidebar
+# App
 # ─────────────────────────────────────────────
+
+st.title("女主无CP / 无男主小说评分")
+
 with st.sidebar:
-    st.markdown("### 📜 评分规则")
+    st.header("评分规则")
     st.markdown("""
-**1. 减分制**
-完结小说满分 10 分，印象分减去各项扣分即为最终得分。
-谨慎打 8 分以上，禁止分数膨胀。
+**1. 打分为减分制**
+完结小说满分为10分，读者根据阅读后体验和感受，给一个印象得分，然后再根据组规进行减分。
+即最终得分 = 印象分 - 减分项，最终得分 < 10分。
+【谨慎打8分以上，禁止分数膨胀】
 
-**2. 扣分规则**
-各项基础扣 1 分，情节严重可叠加，无上限。
-未明确标注/不完全/模棱两可的，均须扣分。
+**2. 打分规则**
+各项基础扣分分值为1分，情节严重的可以增加扣分分值，无上限，必须列出各项减分项存在与否。
+【❗注意：没有明确标注/不完全/模棱两可的即需要扣分，请各位打分人严格执行！】
 
 **维度说明**
-- 📂 作者与作品（p1–p6）
-- 👤 角色设定（p7–p18）
-- 💬 语言叙事（p19–p22）
-- 🏳️ 立场（p23–p25）
+- 📂 作者与作品（p1–p6）【有 = 扣分】
+- 👤 角色设定（p7–p18）【有 = 扣分】
+- 💬 语言叙事（p19–p22）【有 = 扣分】
+- 🏳️ 立场（p23–p25）【没有 = 扣分】
 """)
 
-# ─────────────────────────────────────────────
-# Header
-# ─────────────────────────────────────────────
-st.markdown("""
-<div style="text-align:center; padding: 20px 0 10px 0;">
-  <div style="font-family:'Playfair Display',serif; font-size:1.1rem; color:#888; letter-spacing:6px; margin-bottom:4px;">LITERARY CRITICISM SYSTEM</div>
-  <h1 style="font-size:2.2rem; margin:0;">女主无CP · 无男主小说评分</h1>
-  <div style="width:120px; height:2px; background:linear-gradient(90deg,transparent,#C9A84C,transparent); margin:12px auto;"></div>
-</div>
-""", unsafe_allow_html=True)
-
-# ─────────────────────────────────────────────
-# Book info
-# ─────────────────────────────────────────────
+# ── 书目信息 ──
 col1, col2 = st.columns(2)
 with col1:
-    book_name = st.text_input("📚 书名")
-    book_author = st.text_input("✍️ 作者")
+    book_name   = st.text_input("书名")
+    book_author = st.text_input("作者")
 with col2:
-    book_plate = st.text_input("🌐 发布平台")
-    ich = st.text_input("🖊️ 评分人")
+    book_plate = st.text_input("发布平台")
+    ich        = st.text_input("评分人")
 
 col3, col4 = st.columns([1, 2])
 with col3:
-    impressed_rate = st.number_input("⭐ 印象分（满分10）", min_value=0.0, max_value=10.0, step=0.5)
+    impressed_rate = st.number_input("印象分（满分10）", min_value=0.0, max_value=10.0, step=0.5)
 with col4:
     now = datetime.now().date()
-    st.markdown(f"<div style='color:#888; padding-top:2rem;'>📅 评分日期：{now}</div>", unsafe_allow_html=True)
+    st.caption(f"评分日期：{now}")
 
-# ─────────────────────────────────────────────
-# One-click auto score button
-# ─────────────────────────────────────────────
-st.markdown("---")
-col_auto1, col_auto2 = st.columns([1, 3])
-with col_auto1:
-    auto_score = st.button("⚡ 一键随机打分（演示）")
+st.divider()
+
+# ── 一键随机打分 ──
+if st.button("⚡ 一键随机打分（演示）"):
+    auto = [random.choice(["有", "没有"]) for _ in range(22)]
+    auto += [random.choice(["没有", "没有", "有"]) for _ in range(3)]
+    st.session_state.answers = auto
+    st.session_state.remarks = [""] * 25
+    st.success("已随机生成打分结果，可在下方调整。")
 
 if "answers" not in st.session_state:
     st.session_state.answers = [None] * 25
 if "remarks" not in st.session_state:
     st.session_state.remarks = [""] * 25
 
-if auto_score:
-    # Auto-generate plausible scores: p1-22 random, p23-25 biased toward "没有" (deduct)
-    auto = []
-    for i in range(22):
-        auto.append(random.choice(["有", "没有"]))
-    for i in range(3):
-        auto.append(random.choice(["没有", "没有", "有"]))
-    st.session_state.answers = auto
-    st.session_state.remarks = [""] * 25
-    st.success("已随机生成打分结果，您可在下方调整各项。")
-
-# ─────────────────────────────────────────────
-# Scoring by dimension
-# ─────────────────────────────────────────────
-dimensions = [
-    ("📂 作者与作品", 0, 6),
-    ("👤 角色设定", 6, 18),
-    ("💬 语言叙事", 18, 22),
-    ("🏳️ 立场", 22, 25),
-]
-
 answers = list(st.session_state.answers)
 remarks = list(st.session_state.remarks)
 
-for dim_name, start, end in dimensions:
-    st.markdown(f'<div class="dimension-header">{dim_name}</div>', unsafe_allow_html=True)
+# ── 按维度打分 ──
+dimensions = [
+    ("📂 作者与作品", 0, 6,  "有"),
+    ("👤 角色设定",   6, 18, "有"),
+    ("💬 语言叙事",  18, 22, "有"),
+    ("🏳️ 立场",     22, 25, "没有"),
+]
+
+for dim_name, start, end, deduct_when in dimensions:
+    st.subheader(dim_name)
     for i in range(start, end):
-        principle = principles[i]
-        label = dimension_labels[i]
-        cols = st.columns([4, 2, 3])
+        cols = st.columns([5, 2, 3])
         with cols[0]:
-            idx = i + 1
-            # Determine if this is a "没有扣分" criterion (p23-25)
-            if i >= 22:
-                hint = "【没有 = 扣分】"
-                color = "#888"
-            else:
-                hint = "【有 = 扣分】"
-                color = "#888"
-            st.markdown(f"<div style='color:#ddd; font-size:0.92rem; padding-top:8px;'><b style='color:#C9A84C;'>p{idx}</b> {principle} <span style='color:{color}; font-size:0.78rem;'>{hint}</span></div>", unsafe_allow_html=True)
+            hint = f"【{deduct_when} = 扣分】"
+            st.write(f"**p{i+1}** {principles[i]}")
+            st.caption(hint)
         with cols[1]:
-            options = ["有", "没有"]
             default_idx = 0 if answers[i] == "有" else (1 if answers[i] == "没有" else None)
-            q = st.radio(f"判定_{i}", options, index=default_idx, key=f"radio_{i}", label_visibility="collapsed", horizontal=True)
+            q = st.radio("", ["有", "没有"], index=default_idx,
+                         key=f"radio_{i}", label_visibility="collapsed", horizontal=True)
             answers[i] = q
         with cols[2]:
-            r = st.text_input(f"备注_{i}", value=remarks[i], key=f"remark_{i}", placeholder="备注（可选）", label_visibility="collapsed")
+            r = st.text_input("", value=remarks[i], key=f"remark_{i}",
+                              placeholder="备注（可选）", label_visibility="collapsed")
             remarks[i] = r
 
 st.session_state.answers = answers
 st.session_state.remarks = remarks
 
-# ─────────────────────────────────────────────
-# Extra deduction & comment
-# ─────────────────────────────────────────────
-st.markdown("---")
+st.divider()
+
+# ── 额外扣分 & 评语 ──
 col5, col6 = st.columns([1, 2])
 with col5:
-    extra_rate = st.number_input("➕ 其它恶劣情节额外扣分", min_value=0.0, max_value=10.0, step=0.5)
+    extra_rate = st.number_input("其它恶劣情节额外扣分", min_value=0.0, max_value=10.0, step=0.5)
 with col6:
     extra_note = st.text_area("额外扣分备注")
 
-comment = st.text_area("💬 评分人综合评语")
-
-# ─────────────────────────────────────────────
-# Calculate score
-# ─────────────────────────────────────────────
-y, n = "有", "没有"
-r = [0] * 25
-deduct_details = []
-
-for i, answer in enumerate(answers[:22]):
-    if answer == y:
-        r[i] = -1
-        deduct_details.append(f"p{i+1}")
-
-for i, answer in enumerate(answers[22:], 22):
-    if answer == n:
-        r[i] = -1
-        deduct_details.append(f"p{i+1}")
-
-criteria_deduct = sum(r)
-sum_rate = impressed_rate + criteria_deduct - extra_rate
-
-st.markdown(f"""
-<div style="background:linear-gradient(135deg,#2a2000,#1a1400); border:1px solid #C9A84C; border-radius:8px; padding:20px; margin:20px 0; text-align:center;">
-  <div style="font-family:'Noto Serif SC',serif; color:#888; letter-spacing:3px; margin-bottom:6px;">最终评分</div>
-  <div style="font-family:'Playfair Display',serif; font-size:3.5rem; color:#E8D48B; line-height:1;">{sum_rate:.1f}</div>
-  <div style="color:#888; font-size:0.85rem; margin-top:8px;">印象分 {impressed_rate} | 准则扣分 {criteria_deduct} | 额外扣分 -{extra_rate}</div>
-</div>
-""", unsafe_allow_html=True)
-
-
-
+comment = st.text_area("评分人综合评语")
 
 
 # ─────────────────────────────────────────────
@@ -456,7 +347,7 @@ if st.button("🖼️ 生成评鉴图片"):
                 with open(tmp_html, "w", encoding="utf-8") as f:
                     f.write(html)
                 subprocess.run(
-                    ["wkhtmltoimage", "--width", "430", "--quality", "95",
+                    [_find_wkhtmltoimage() or "wkhtmltoimage", "--width", "430", "--quality", "95",
                      "--enable-local-file-access", tmp_html, tmp_png],
                     capture_output=True
                 )
