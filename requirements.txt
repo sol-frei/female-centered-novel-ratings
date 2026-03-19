@@ -2,3 +2,4 @@ streamlit
 pandas
 weasyprint
 pdf2image
+Pillow
