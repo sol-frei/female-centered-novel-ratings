@@ -169,19 +169,18 @@ st.write(f"最终评分为：{sum_rate}")
 
 
 # ─────────────────────────────────────────────
-# HTML 构建（纯 table + 固定页面尺寸，解决 WeasyPrint 排版问题）
+# HTML 构建（已优化右侧填充与自动裁剪逻辑）
 # ─────────────────────────────────────────────
 
-# WeasyPrint 的关键修复：@page 设置页面宽高等于内容，禁止自动分页
 _WEASY_BASE_STYLE = """
 <style>
 @page { size: 430px auto; margin: 0; }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { width:430px; background:#f7f5f2;
        font-family:'Noto Sans CJK SC','WenQuanYi Micro Hei','AR PL UMing CN',serif;
-       color:#1a1a1a; }
-table { border-collapse:collapse; width:100%; }
-div { line-height: 1.4; }
+       color:#1a1a1a; overflow-x: hidden; }
+table { border-collapse:collapse; width: 430px; table-layout: fixed; }
+div { line-height: 1.4; word-wrap: break-word; }
 </style>
 """
 
@@ -341,24 +340,21 @@ def get_weasyprint_html_class():
     return WeasyprintHTML
 
 def _autocrop(img):
-    """从底部往上扫描，找到最后一行含有非背景色像素的行，裁掉下方空白。"""
+    """全自动裁剪：扫描图片中非背景色区域，切除四周所有多余白边。"""
     import numpy as np
     arr = np.array(img.convert("RGB"))
     h, w = arr.shape[:2]
-    # 取最右列中间偏上的像素作为背景色（避开表格内容区）
-    # 更稳妥：直接用右下角像素，那里一定是空白背景
-    bg = arr[h - 1, w - 1].tolist()
-    # 从底部往上逐行检查，找到第一行不全是背景色的行
-    last_content_row = 0
-    for row in range(h - 1, -1, -1):
-        row_pixels = arr[row]
-        # 判断这行是否含有非背景色像素（允许 10 的色差容忍）
-        diff = np.abs(row_pixels.astype(int) - bg).max(axis=1)
-        if diff.max() > 10:
-            last_content_row = row
-            break
-    bottom = min(last_content_row + 8, h)  # 保留 8px 下边距
-    return img.crop((0, 0, w, bottom))
+    # 取右下角像素作为基准色
+    bg_color = arr[h - 1, w - 1]
+    # 找到内容边界
+    mask = np.any(np.abs(arr - bg_color) > 15, axis=-1)
+    coords = np.argwhere(mask)
+    if coords.size == 0:
+        return img
+    y0, x0 = coords.min(axis=0)
+    y1, x1 = coords.max(axis=0)
+    # 裁剪：left, top, right, bottom
+    return img.crop((x0, y0, x1 + 1, y1 + 8))
 
 def html_to_png_bytes(html_str):
     from pdf2image import convert_from_bytes
