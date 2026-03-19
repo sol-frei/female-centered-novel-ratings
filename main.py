@@ -341,16 +341,24 @@ def get_weasyprint_html_class():
     return WeasyprintHTML
 
 def _autocrop(img):
-    """裁掉图片底部空白，只保留实际内容高度。"""
-    from PIL import Image as PilImage, ImageChops
-    bg_color = img.getpixel((0, 0))
-    bg_img = PilImage.new(img.mode, img.size, bg_color)  # 修复：用 PilImage.new 而非 img.new
-    diff = ImageChops.difference(img, bg_img)
-    bbox = diff.getbbox()
-    if bbox:
-        bottom = min(bbox[3] + 4, img.height)
-        return img.crop((0, 0, img.width, bottom))
-    return img
+    """从底部往上扫描，找到最后一行含有非背景色像素的行，裁掉下方空白。"""
+    import numpy as np
+    arr = np.array(img.convert("RGB"))
+    h, w = arr.shape[:2]
+    # 取最右列中间偏上的像素作为背景色（避开表格内容区）
+    # 更稳妥：直接用右下角像素，那里一定是空白背景
+    bg = arr[h - 1, w - 1].tolist()
+    # 从底部往上逐行检查，找到第一行不全是背景色的行
+    last_content_row = 0
+    for row in range(h - 1, -1, -1):
+        row_pixels = arr[row]
+        # 判断这行是否含有非背景色像素（允许 10 的色差容忍）
+        diff = np.abs(row_pixels.astype(int) - bg).max(axis=1)
+        if diff.max() > 10:
+            last_content_row = row
+            break
+    bottom = min(last_content_row + 8, h)  # 保留 8px 下边距
+    return img.crop((0, 0, w, bottom))
 
 def html_to_png_bytes(html_str):
     from pdf2image import convert_from_bytes
