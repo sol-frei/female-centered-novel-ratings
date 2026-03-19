@@ -1,3 +1,4 @@
 streamlit
 pandas
-html2image
+weasyprint
+pdf2image
