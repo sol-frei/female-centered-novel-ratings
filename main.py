@@ -347,7 +347,7 @@ def _autocrop(img):
     h, w = arr.shape[:2]
     # 取最右列中间偏上的像素作为背景色（避开表格内容区）
     # 更稳妥：直接用右下角像素，那里一定是空白背景
-    bg = arr[h - 1, w - 1].tolist()
+    bg = [247, 245, 242]  # 直接写死 #f7f5f2
     # 从底部往上逐行检查，找到第一行不全是背景色的行
     last_content_row = 0
     for row in range(h - 1, -1, -1):
