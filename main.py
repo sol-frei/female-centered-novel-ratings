@@ -9,7 +9,7 @@ import streamlit as st
 import pandas as pd
 from principle import principles, dimension_labels
 
-st.set_page_config(page_title="女主无CP/无男主小说评分", page_icon="📖", layout="wide")
+st.set_page_config(page_title="女主无CP评分系统", page_icon="📖", layout="wide")
 
 # ─────────────────────────────────────────────
 # Sidebar
@@ -114,10 +114,10 @@ components.html("""
 # 按维度打分
 # ─────────────────────────────────────────────
 dimensions = [
-    ("作者与作品", 0,  6),
-    ("角色设定",   6,  18),
-    ("语言叙事",   18, 22),
-    ("立场",      22, 25),
+    ("📂 作者与作品", 0,  6),
+    ("👤 角色设定",   6,  18),
+    ("💬 语言叙事",   18, 22),
+    ("🏳️ 立场",      22, 25),
 ]
 
 for dim_name, start, end in dimensions:
@@ -132,7 +132,7 @@ for dim_name, start, end in dimensions:
             answers[i] = q
         remarks[i] = st.text_area("备注", value=remarks[i],
                                    key=f"remark_{i}", label_visibility="collapsed",
-                                   placeholder="备注：")
+                                   placeholder="备注（可选）")
 
 st.session_state["answers"] = answers
 st.session_state["remarks"] = remarks
@@ -340,14 +340,27 @@ def get_weasyprint_html_class():
     from weasyprint import HTML as WeasyprintHTML
     return WeasyprintHTML
 
+def _autocrop(img):
+    """裁掉图片底部空白，只保留实际内容高度。"""
+    from PIL import ImageChops
+    bg_color = img.getpixel((0, 0))
+    bg_img = img.new(img.mode, img.size, bg_color)
+    diff = ImageChops.difference(img, bg_img)
+    bbox = diff.getbbox()
+    if bbox:
+        bottom = min(bbox[3] + 4, img.height)
+        return img.crop((0, 0, img.width, bottom))
+    return img
+
 def html_to_png_bytes(html_str):
     from pdf2image import convert_from_bytes
     WeasyprintHTML = get_weasyprint_html_class()
     pdf_bytes = WeasyprintHTML(string=html_str).write_pdf()
     images = convert_from_bytes(pdf_bytes, dpi=150, first_page=1, last_page=1)
     if images:
+        cropped = _autocrop(images[0])
         buf = io.BytesIO()
-        images[0].save(buf, format="PNG")
+        cropped.save(buf, format="PNG")
         return buf.getvalue()
     return None
 
@@ -356,11 +369,11 @@ def html_to_png_bytes(html_str):
 # 生成图片按钮
 # ─────────────────────────────────────────────
 
-if st.button("生成图片"):
+if st.button("🖼️ 生成评鉴图片"):
     if not book_name:
         st.warning("请先填写书名！")
     else:
-        with st.spinner("正在生成图片，请稍候..."):
+        with st.spinner("正在生成评鉴证书图片，请稍候..."):
             score_color = (
                 "#b03a2e" if sum_rate < 4 else
                 "#a04000" if sum_rate < 6 else
