@@ -9,7 +9,7 @@ import streamlit as st
 import pandas as pd
 from principle import principles, dimension_labels
 
-st.set_page_config(page_title="女主无CP/无男主小说评分", page_icon="📖", layout="wide")
+st.set_page_config(page_title="女主无CP评分系统", page_icon="📖", layout="wide")
 
 # ─────────────────────────────────────────────
 # Sidebar
@@ -63,6 +63,18 @@ now         = datetime.now().date()
 
 st.divider()
 
+# ─────────────────────────────────────────────
+# 一键满分打分
+# ─────────────────────────────────────────────
+if st.button("⚡ 一键满分打分"):
+    st.session_state["answers"]       = ["没有"] * 22 + ["有"] * 3
+    st.session_state["remarks"]       = [""] * 25
+    st.session_state["impressed_val"] = 10.0
+    st.session_state["generated_imgs"] = None  # 清除旧图片
+    st.rerun()
+
+answers = list(st.session_state["answers"])
+remarks = list(st.session_state["remarks"])
 
 # ─────────────────────────────────────────────
 # Radio 颜色 CSS 注入
@@ -102,10 +114,10 @@ components.html("""
 # 按维度打分
 # ─────────────────────────────────────────────
 dimensions = [
-    ("作者与作品", 0,  6),
-    ("角色设定",   6,  18),
-    ("语言叙事",   18, 22),
-    ("立场",      22, 25),
+    ("📂 作者与作品", 0,  6),
+    ("👤 角色设定",   6,  18),
+    ("💬 语言叙事",   18, 22),
+    ("🏳️ 立场",      22, 25),
 ]
 
 for dim_name, start, end in dimensions:
@@ -199,7 +211,7 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
 <table style="background:#fff;border:1px solid #ddd;">
   <tr><td colspan="2" style="padding:26px 24px 20px;text-align:center;background:#fffdf9;border-bottom:1px solid #e8e2d8;">
     <div style="font-size:7px;letter-spacing:4px;color:#c8b89a;margin-bottom:8px;font-family:Georgia,serif;">FEMINIST LITERATURE RATING CERTIFICATE</div>
-    <div style="font-size:18px;font-weight:800;color:#111;letter-spacing:3px;line-height:1.5;">女主无CP<br/>无男主小说评分</div>
+    <div style="font-size:18px;font-weight:800;color:#111;letter-spacing:3px;line-height:1.5;">女主无CP<br/>无男主小说评鉴书</div>
     <div style="margin:10px auto 0;width:160px;border-top:1px solid #e0d5c0;"></div>
   </td></tr>
   <tr><td colspan="2" style="padding:22px 24px 16px;text-align:center;border-bottom:1px solid #e0dbd4;background:#fff;">
@@ -357,11 +369,11 @@ def html_to_png_bytes(html_str):
 # 生成图片按钮
 # ─────────────────────────────────────────────
 
-if st.button("🖼️ 生成图片"):
+if st.button("🖼️ 生成评鉴图片"):
     if not book_name:
         st.warning("请先填写书名！")
     else:
-        with st.spinner("正在生成图片，请稍候..."):
+        with st.spinner("正在生成评鉴证书图片，请稍候..."):
             score_color = (
                 "#b03a2e" if sum_rate < 4 else
                 "#a04000" if sum_rate < 6 else
