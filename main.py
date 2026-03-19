@@ -214,7 +214,7 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
 <table style="background:#fff;border:1px solid #ddd;">
   <tr><td colspan="2" style="padding:26px 24px 20px;text-align:center;background:#fffdf9;border-bottom:1px solid #e8e2d8;">
     <div style="font-size:7px;letter-spacing:4px;color:#c8b89a;margin-bottom:8px;font-family:Georgia,serif;">FEMINIST LITERATURE RATING CERTIFICATE</div>
-    <div style="font-size:18px;font-weight:800;color:#111;letter-spacing:3px;line-height:1.5;">女主无CP<br/>无男主小说评分</div>
+    <div style="font-size:18px;font-weight:800;color:#111;letter-spacing:3px;line-height:1.5;">女主无CP/无男主小说评分</div>
     <div style="margin:10px auto 0;width:160px;border-top:1px solid #e0d5c0;"></div>
   </td></tr>
   <tr><td colspan="2" style="padding:22px 24px 16px;text-align:center;border-bottom:1px solid #e0dbd4;background:#fff;">
