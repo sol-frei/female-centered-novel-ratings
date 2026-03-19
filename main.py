@@ -1,20 +1,6 @@
 import os
 import subprocess
 import sys
-import shutil
-
-# ── Auto-install html2image on Streamlit Cloud ──────────────
-def _ensure_html2image():
-    try:
-        import html2image
-    except ImportError:
-        subprocess.run([sys.executable, "-m", "pip", "install", "html2image", "-q"], check=True)
-
-try:
-    _ensure_html2image()
-except Exception:
-    pass
-# ─────────────────────────────────────────────────────────────
 
 import streamlit as st
 import pandas as pd
@@ -332,17 +318,24 @@ if st.button("🖼️ 生成评鉴图片"):
             page_labels = ["评分总览", "明细·作者与角色", "明细·语言与立场"]
             img_bytes_list = []
 
-            from html2image import Html2Image
-            hti = Html2Image(output_path="/tmp", custom_flags=["--no-sandbox", "--disable-gpu"])
+            try:
+                from weasyprint import HTML as WeasyprintHTML
+                from pdf2image import convert_from_bytes
+            except ImportError:
+                import subprocess as _sp, sys as _sys
+                _sp.run([_sys.executable, "-m", "pip", "install", "weasyprint", "pdf2image", "-q"])
+                from weasyprint import HTML as WeasyprintHTML
+                from pdf2image import convert_from_bytes
 
             for idx, html in enumerate(pages):
-                tmp_png = f"rating_p{idx+1}.png"
                 try:
-                    hti.screenshot(html_str=html, save_as=tmp_png, size=(430, 800))
-                    full_path = f"/tmp/{tmp_png}"
-                    if os.path.exists(full_path):
-                        with open(full_path, "rb") as f:
-                            img_bytes_list.append((page_labels[idx], f.read()))
+                    import io
+                    pdf_bytes = WeasyprintHTML(string=html).write_pdf()
+                    images = convert_from_bytes(pdf_bytes, dpi=150, first_page=1, last_page=1)
+                    if images:
+                        buf = io.BytesIO()
+                        images[0].save(buf, format="PNG")
+                        img_bytes_list.append((page_labels[idx], buf.getvalue()))
                 except Exception as e:
                     st.warning(f"第 {idx+1} 页生成失败：{e}")
 
