@@ -416,10 +416,4 @@ if st.session_state["generated_imgs"]:
         if img_bytes:
             st.markdown(f"#### {label}")
             st.image(img_bytes, use_container_width=True)
-            st.download_button(
-                label=f"⬇ 下载 {label}",
-                data=img_bytes,
-                file_name=f"{label}.png",
-                mime="image/png",
-                key=f"dl_{label}",
-            )
+            st.caption("📱 长按图片即可保存到相册")
