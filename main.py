@@ -131,7 +131,8 @@ for dim_name, start, end in dimensions:
         col_radio, col_empty = st.columns([2, 5])
         with col_radio:
             q = st.radio("", ["有", "没有"],
-                         key=f"radio_{i}", label_visibility="collapsed", horizontal=True)
+                         key=f"radio_{i}", label_visibility="collapsed", horizontal=True,
+                         index=None)
             answers[i] = q
         remarks[i] = st.text_area("备注", value=remarks[i],
                                    key=f"remark_{i}", label_visibility="collapsed",
