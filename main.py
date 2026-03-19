@@ -351,7 +351,10 @@ def html_to_png_bytes(html_str):
         )
         page = browser.new_page(viewport={"width": 430, "height": 800})
         page.set_content(html_str, wait_until="networkidle")
-        png = page.screenshot(full_page=True)
+        # 获取实际内容高度并裁剪
+        height = page.evaluate("document.body.scrollHeight")
+        page.set_viewport_size({"width": 430, "height": height})
+        png = page.screenshot(full_page=False)
         browser.close()
     return png
 
