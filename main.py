@@ -163,7 +163,7 @@ for i, answer in enumerate(answers[:22]):
         deduct_details.append(f"p{i+1}")
 
 for i, answer in enumerate(answers[22:], 22):
-    if answer == n or answer is None:
+    if answer == n :
         r[i] = -1
         deduct_details.append(f"p{i+1}")
 
