@@ -3,4 +3,4 @@ pandas
 weasyprint
 pdf2image
 Pillow
-numpy
+
