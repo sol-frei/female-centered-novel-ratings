@@ -1,3 +1,23 @@
+import os
+import subprocess
+import sys
+
+# ── Auto-install wkhtmltopdf on Streamlit Cloud ──────────────
+def _install_wkhtmltopdf():
+    if os.path.exists("/usr/local/bin/wkhtmltoimage"):
+        return
+    deb_url = "https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.bullseye_amd64.deb"
+    deb_path = "/tmp/wkhtmltox.deb"
+    subprocess.run(["wget", "-q", "-O", deb_path, deb_url], check=True)
+    subprocess.run(["dpkg", "-i", deb_path], capture_output=True)
+    subprocess.run(["apt-get", "install", "-f", "-y"], capture_output=True)
+
+try:
+    _install_wkhtmltopdf()
+except Exception:
+    pass
+# ─────────────────────────────────────────────────────────────
+
 import streamlit as st
 import pandas as pd
 from principle import principles, dimension_labels
