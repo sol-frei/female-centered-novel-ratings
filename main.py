@@ -205,7 +205,7 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
     if comment:
         comment_rows = f"""
   <tr><td colspan="2" style="padding:14px 20px 18px;">
-    <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:6px;font-family:Georgia,serif;">REVIEWER'S NOTE</div>
+    <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:6px;font-family:Georgia,serif;">爱女姐有话说</div>
     <div style="font-size:12px;color:#444;line-height:1.8;font-style:italic;font-family:Georgia,serif;">「{comment}」</div>
   </td></tr>"""
 
@@ -228,13 +228,13 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
       <div style="font-size:13px;color:#555;letter-spacing:1px;">印 象 分</div>
     </td>
     <td style="padding:13px 24px;text-align:right;border-bottom:1px solid #f0eeec;">
-      <span style="font-size:32px;font-weight:300;color:#c09430;font-family:Georgia,serif;">+{impressed_rate:.1f}</span>
+      <span style="font-size:32px;font-weight:300;color:#c09430;font-family:Georgia,serif;">{impressed_rate:.1f}</span>
     </td>
   </tr>
   <tr>
     <td style="padding:13px 24px;border-bottom:1px solid #f0eeec;">
       <div style="font-size:7px;color:#c8b89a;letter-spacing:3px;margin-bottom:2px;font-family:Georgia,serif;">CRITERIA</div>
-      <div style="font-size:13px;color:#555;letter-spacing:1px;">准则扣分 <span style="font-size:10px;color:#bbb;">共{deduct_count}项</span></div>
+      <div style="font-size:13px;color:#555;letter-spacing:1px;">准则扣分</div>
     </td>
     <td style="padding:13px 24px;text-align:right;border-bottom:1px solid #f0eeec;">
       <span style="font-size:32px;font-weight:300;color:#b03a2e;font-family:Georgia,serif;">{criteria_deduct:.0f}</span>
