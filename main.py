@@ -9,7 +9,7 @@ import streamlit as st
 import pandas as pd
 from principle import principles, dimension_labels
 
-st.set_page_config(page_title="女主无CP评分系统", page_icon="📖", layout="wide")
+st.set_page_config(page_title="女主无CP/无男主评分", page_icon="📖", layout="wide")
 
 # ─────────────────────────────────────────────
 # Sidebar
@@ -50,7 +50,7 @@ book_name  = st.text_input("请输入书名：")
 # 一键满分时写入 session_state["impressed_val"]，下一次 rerun 就会读到 10.0
 impressed_rate = st.number_input(
     "请输入你的印象分*：",
-    min_value=0.0, max_value=10.0, step=0.5,
+    min_value=0.0, max_value=10.0, step=1,
     value=float(st.session_state["impressed_val"]),
 )
 # 用户手动改值时也同步到 session_state
@@ -118,10 +118,10 @@ components.html("""
 # 按维度打分
 # ─────────────────────────────────────────────
 dimensions = [
-    ("📂 作者与作品", 0,  6),
-    ("👤 角色设定",   6,  18),
-    ("💬 语言叙事",   18, 22),
-    ("🏳️ 立场",      22, 25),
+    ("作者与作品", 0,  6),
+    ("角色设定",   6,  18),
+    ("语言叙事",   18, 22),
+    ("立场",      22, 25),
 ]
 
 for dim_name, start, end in dimensions:
@@ -130,13 +130,12 @@ for dim_name, start, end in dimensions:
         st.markdown(f"**{i+1}、{principles[i]}**")
         col_radio, col_empty = st.columns([2, 5])
         with col_radio:
-            default_idx = 0 if answers[i] == "有" else (1 if answers[i] == "没有" else None)
-            q = st.radio("", ["有", "没有"], index=default_idx,
+            q = st.radio("", ["有", "没有"],
                          key=f"radio_{i}", label_visibility="collapsed", horizontal=True)
             answers[i] = q
         remarks[i] = st.text_area("备注", value=remarks[i],
                                    key=f"remark_{i}", label_visibility="collapsed",
-                                   placeholder="备注（可选）")
+                                   placeholder="备注")
 
 st.session_state["answers"] = answers
 st.session_state["remarks"] = remarks
@@ -215,7 +214,7 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
 <table style="background:#fff;border:1px solid #ddd;">
   <tr><td colspan="2" style="padding:26px 24px 20px;text-align:center;background:#fffdf9;border-bottom:1px solid #e8e2d8;">
     <div style="font-size:7px;letter-spacing:4px;color:#c8b89a;margin-bottom:8px;font-family:Georgia,serif;">FEMINIST LITERATURE RATING CERTIFICATE</div>
-    <div style="font-size:18px;font-weight:800;color:#111;letter-spacing:3px;line-height:1.5;">女主无CP<br/>无男主小说评鉴书</div>
+    <div style="font-size:18px;font-weight:800;color:#111;letter-spacing:3px;line-height:1.5;">女主无CP<br/>无男主小说评分</div>
     <div style="margin:10px auto 0;width:160px;border-top:1px solid #e0d5c0;"></div>
   </td></tr>
   <tr><td colspan="2" style="padding:22px 24px 16px;text-align:center;border-bottom:1px solid #e0dbd4;background:#fff;">
@@ -252,21 +251,21 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
   </tr>
   <tr>
     <td style="padding:11px 18px;border-right:1px solid #ece8e0;border-bottom:1px solid #ece8e0;width:50%;">
-      <div style="font-size:7px;color:#c8b89a;letter-spacing:3px;margin-bottom:3px;font-family:Georgia,serif;">TITLE</div>
+      <div style="font-size:7px;color:#c8b89a;letter-spacing:3px;margin-bottom:3px;font-family:Georgia,serif;">作品</div>
       <div style="font-size:13px;font-weight:700;color:#111;">{book_name}</div>
     </td>
     <td style="padding:11px 18px;border-bottom:1px solid #ece8e0;width:50%;">
-      <div style="font-size:7px;color:#c8b89a;letter-spacing:3px;margin-bottom:3px;font-family:Georgia,serif;">AUTHOR</div>
+      <div style="font-size:7px;color:#c8b89a;letter-spacing:3px;margin-bottom:3px;font-family:Georgia,serif;">作者</div>
       <div style="font-size:13px;font-weight:700;color:#111;">{book_author or "—"}</div>
     </td>
   </tr>
   <tr>
     <td style="padding:11px 18px;border-right:1px solid #ece8e0;border-bottom:1px solid #e0dbd4;">
-      <div style="font-size:7px;color:#c8b89a;letter-spacing:3px;margin-bottom:3px;font-family:Georgia,serif;">PLATFORM</div>
+      <div style="font-size:7px;color:#c8b89a;letter-spacing:3px;margin-bottom:3px;font-family:Georgia,serif;">平台</div>
       <div style="font-size:13px;font-weight:700;color:#111;">{book_plate or "—"}</div>
     </td>
     <td style="padding:11px 18px;border-bottom:1px solid #e0dbd4;">
-      <div style="font-size:7px;color:#c8b89a;letter-spacing:3px;margin-bottom:3px;font-family:Georgia,serif;">REVIEWER · DATE</div>
+      <div style="font-size:7px;color:#c8b89a;letter-spacing:3px;margin-bottom:3px;font-family:Georgia,serif;">评分人 · 日期</div>
       <div style="font-size:12px;font-weight:600;color:#111;">{ich or "—"}<br/>{now}</div>
     </td>
   </tr>
