@@ -340,38 +340,20 @@ def get_weasyprint_html_class():
     from weasyprint import HTML as WeasyprintHTML
     return WeasyprintHTML
 
-def _autocrop(img):
-    """从底部往上扫描，找到最后一行含有非背景色像素的行，裁掉下方空白。"""
-    import numpy as np
-    arr = np.array(img.convert("RGB"))
-    h, w = arr.shape[:2]
-    # 取最右列中间偏上的像素作为背景色（避开表格内容区）
-    # 更稳妥：直接用右下角像素，那里一定是空白背景
-    bg = [247, 245, 242]  # 直接写死 #f7f5f2
-    # 从底部往上逐行检查，找到第一行不全是背景色的行
-    last_content_row = 0
-    for row in range(h - 1, -1, -1):
-        row_pixels = arr[row]
-        # 判断这行是否含有非背景色像素（允许 10 的色差容忍）
-        diff = np.abs(row_pixels.astype(int) - bg).max(axis=1)
-        if diff.max() > 10:
-            last_content_row = row
-            break
-    bottom = min(last_content_row + 8, h)  # 保留 8px 下边距
-    return img.crop((0, 0, w, bottom))
+
 
 def html_to_png_bytes(html_str):
-    from pdf2image import convert_from_bytes
-    WeasyprintHTML = get_weasyprint_html_class()
-    pdf_bytes = WeasyprintHTML(string=html_str).write_pdf()
-    images = convert_from_bytes(pdf_bytes, dpi=150, first_page=1, last_page=1)
-    if images:
-        cropped = _autocrop(images[0])
-        buf = io.BytesIO()
-        cropped.save(buf, format="PNG")
-        return buf.getvalue()
-    return None
-
+    from playwright.sync_api import sync_playwright
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            executable_path="/usr/bin/chromium",
+            args=["--no-sandbox", "--disable-dev-shm-usage"]
+        )
+        page = browser.new_page(viewport={"width": 430, "height": 800})
+        page.set_content(html_str, wait_until="networkidle")
+        png = page.screenshot(full_page=True)
+        browser.close()
+    return png
 
 # ─────────────────────────────────────────────
 # 生成图片按钮
