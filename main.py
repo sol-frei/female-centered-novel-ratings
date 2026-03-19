@@ -349,9 +349,11 @@ def html_to_png_bytes(html_str):
             executable_path="/usr/bin/chromium",
             args=["--no-sandbox", "--disable-dev-shm-usage"]
         )
-        page = browser.new_page(viewport={"width": 430, "height": 800})
+        page = browser.new_page(
+            viewport={"width": 430, "height": 800},
+            device_scale_factor=3  # 加这一行，3倍清晰度
+        )
         page.set_content(html_str, wait_until="networkidle")
-        # 获取实际内容高度并裁剪
         height = page.evaluate("document.body.scrollHeight")
         page.set_viewport_size({"width": 430, "height": height})
         png = page.screenshot(full_page=False)
