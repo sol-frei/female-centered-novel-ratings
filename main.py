@@ -64,7 +64,7 @@ book_name  = st.text_input("请输入书名：")
 # ⚠️ 不给 number_input 设置 key，这样 value= 参数每次 rerun 都生效
 # 一键满分时写入 session_state["impressed_val"]，下一次 rerun 就会读到 10.0
 impressed_rate_str = st.text_input("请输入你的印象分*：",
-                                    value=str(st.session_state["impressed_val"]))
+                                    value="" if st.session_state["impressed_val"] == 0.0 else str(st.session_state["impressed_val"]))
 st.caption("印象分范围：0 ~ 10")
 try:
     impressed_rate = float(impressed_rate_str)
