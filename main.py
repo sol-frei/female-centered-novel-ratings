@@ -1,26 +1,20 @@
 import os
-import subprocess
 import sys
+import subprocess
+import io
+import base64
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 
 import streamlit as st
 import pandas as pd
 from principle import principles, dimension_labels
-from datetime import datetime
-import base64
-import subprocess
-import os
-import random
 
 st.set_page_config(page_title="女主无CP评分系统", page_icon="📖", layout="wide")
 
-
-
 # ─────────────────────────────────────────────
-# App
+# Sidebar
 # ─────────────────────────────────────────────
-
-st.title("女主无cp/无男主小说评分")
-
 with st.sidebar:
     st.header("评分规则")
     st.markdown("""
@@ -36,31 +30,106 @@ with st.sidebar:
 【❗❗❗注意：没有明确标注/提出的、不完全的、模棱两可的即需要扣分，请各位打分人严格执行！！】
 """)
 
-# ── 书目信息 ──
-book_name      = st.text_input("请输入书名：")
-_default_impressed = float(st.session_state.pop("impressed_rate_override", 0.0))
-impressed_rate = st.number_input("请输入你的印象分*：", min_value=0.0, max_value=10.0, step=0.5, value=_default_impressed)
-book_author    = st.text_input("请输入作者姓名：")
-book_plate     = st.text_input("请输入作品发布平台：")
-ich            = st.text_input("评分人：")
-now            = datetime.now().date()
-
-st.divider()
-
-# ── 一键随机打分 ──
-if st.button("⚡ 一键满分打分"):
-    st.session_state.answers = ["没有"] * 22 + ["有"] * 3
-    st.session_state.remarks = [""] * 25
-    st.session_state.impressed_rate_override = 10.0
-    st.success("已生成满分评分结果，可在下方调整。")
-
+# ─────────────────────────────────────────────
+# 初始化 session_state
+# ─────────────────────────────────────────────
 if "answers" not in st.session_state:
     st.session_state.answers = [None] * 25
 if "remarks" not in st.session_state:
     st.session_state.remarks = [""] * 25
+if "impressed_rate" not in st.session_state:
+    st.session_state.impressed_rate = 0.0
+
+# ── 书目信息 ──
+book_name   = st.text_input("请输入书名：")
+impressed_rate = st.number_input(
+    "请输入你的印象分*：",
+    min_value=0.0, max_value=10.0, step=0.5,
+    value=float(st.session_state.impressed_rate),
+    key="impressed_rate_input"
+)
+st.session_state.impressed_rate = impressed_rate
+
+book_author = st.text_input("请输入作者姓名：")
+book_plate  = st.text_input("请输入作品发布平台：")
+ich         = st.text_input("评分人：")
+now         = datetime.now().date()
+
+st.divider()
+
+# ── 一键满分打分 ──
+if st.button("⚡ 一键满分打分"):
+    st.session_state.answers = ["没有"] * 22 + ["有"] * 3
+    st.session_state.remarks = [""] * 25
+    st.session_state.impressed_rate = 10.0
+    st.rerun()
 
 answers = list(st.session_state.answers)
 remarks = list(st.session_state.remarks)
+
+# ── 全局注入：radio 圆点颜色 CSS ──
+# 原理：Streamlit radio 选中时，对应的 [data-baseweb="radio"] 节点有 aria-checked="true"
+# 利用 CSS :has() 选择器，根据选项文字内容定位，再配合题目序号的 data 属性包裹容器着色。
+# 每道题渲染时输出一个 <div data-qi="{i}">，CSS 通过该属性区分题目范围。
+st.markdown("""
+<style>
+/* ── 全局：把所有 radio 选中圆点先重置为主题蓝（防止残留） ── */
+[data-baseweb="radio"][aria-checked="true"] svg circle:last-child {
+    fill: #1976d2 !important;
+}
+
+/* ══════════════════════════════════════════
+   题目 0-21（第1-22条）
+   选"有"(选项0) 选中 → 红色
+   选"没有"(选项1) 选中 → 绿色
+   ══════════════════════════════════════════ */
+/* 第1-22条，选"有"→红 */
+[data-qi-type="normal"] [data-baseweb="radio"]:nth-of-type(1)[aria-checked="true"] svg circle:last-child {
+    fill: #e53935 !important;
+}
+/* 第1-22条，选"没有"→绿 */
+[data-qi-type="normal"] [data-baseweb="radio"]:nth-of-type(2)[aria-checked="true"] svg circle:last-child {
+    fill: #2e7d32 !important;
+}
+
+/* ══════════════════════════════════════════
+   题目 22-24（第23-25条）
+   选"有"(选项0) 选中 → 绿色
+   选"没有"(选项1) 选中 → 红色
+   ══════════════════════════════════════════ */
+/* 第23-25条，选"有"→绿 */
+[data-qi-type="stance"] [data-baseweb="radio"]:nth-of-type(1)[aria-checked="true"] svg circle:last-child {
+    fill: #2e7d32 !important;
+}
+/* 第23-25条，选"没有"→红 */
+[data-qi-type="stance"] [data-baseweb="radio"]:nth-of-type(2)[aria-checked="true"] svg circle:last-child {
+    fill: #e53935 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ── 用 components.html 注入 MutationObserver，按顺序给每个 radio 容器打 data-qi-type ──
+import streamlit.components.v1 as components
+components.html("""
+<script>
+(function() {
+  function applyTypes() {
+    var doc = window.parent.document;
+    var radios = doc.querySelectorAll('[data-testid="stRadio"]');
+    radios.forEach(function(el, idx) {
+      // 前22个 radio（idx 0-21）是 normal，后3个（idx 22-24）是 stance
+      var t = idx < 22 ? 'normal' : 'stance';
+      if (el.getAttribute('data-qi-type') !== t) {
+        el.setAttribute('data-qi-type', t);
+      }
+    });
+  }
+  applyTypes();
+  var mo = new MutationObserver(applyTypes);
+  mo.observe(window.parent.document.body, {childList: true, subtree: true});
+})();
+</script>
+""", height=0)
 
 # ── 按维度打分 ──
 dimensions = [
@@ -73,7 +142,13 @@ dimensions = [
 for dim_name, start, end, deduct_when in dimensions:
     st.subheader(dim_name)
     for i in range(start, end):
-        st.markdown(f"**{i+1}、{principles[i]}**")
+        # 输出带 data-qi-index 标记的隐藏 div，供上方 JS 定位
+        qi_type = "normal" if i < 22 else "stance"
+        st.markdown(
+            f'<div data-qi-index="{i}" data-qi-type="{qi_type}" style="margin:0;padding:0;">'
+            f'<strong>{i+1}、{principles[i]}</strong></div>',
+            unsafe_allow_html=True
+        )
         col_radio, col_empty = st.columns([2, 5])
         with col_radio:
             default_idx = 0 if answers[i] == "有" else (1 if answers[i] == "没有" else None)
@@ -111,12 +186,11 @@ for i, answer in enumerate(answers[22:], 22):
 
 criteria_deduct = sum(r)
 sum_rate = impressed_rate + criteria_deduct - extra_rate
-
 st.write(f"最终评分为：{sum_rate}")
 
 
 # ─────────────────────────────────────────────
-# Generate Image
+# HTML 构建（table 布局，WeasyPrint 兼容）
 # ─────────────────────────────────────────────
 
 def build_page1_html(book_name, book_author, book_plate, ich, now,
@@ -125,94 +199,99 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
 
     extra_block = ""
     if extra_rate > 0 or extra_note:
-        extra_block = (
-            '<div style="padding:14px 20px 16px;border-bottom:1px solid #e0dbd4;">'
-            '<div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:8px;font-family:Georgia,serif;">ADDITIONAL DEDUCTION · 额外扣分</div>'
-            f'<div style="font-size:13px;color:#333;line-height:1.6;">{extra_note}</div>'
-            f'<div style="font-size:11px;color:#b03a2e;font-weight:700;margin-top:4px;font-family:Georgia,serif;">−{extra_rate:.1f} 分</div>'
-            '</div>'
-        )
+        extra_block = f"""
+<tr><td colspan="2" style="padding:14px 20px 16px;border-bottom:1px solid #e0dbd4;">
+  <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:8px;font-family:Georgia,serif;">ADDITIONAL DEDUCTION · 额外扣分</div>
+  <div style="font-size:13px;color:#333;line-height:1.6;">{extra_note}</div>
+  <div style="font-size:11px;color:#b03a2e;font-weight:700;margin-top:4px;font-family:Georgia,serif;">&#8722;{extra_rate:.1f} 分</div>
+</td></tr>"""
 
     comment_block = ""
     if comment:
-        comment_block = (
-            '<div style="padding:16px 20px 20px;border-top:1px solid #e0dbd4;">'
-            '<div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:8px;font-family:Georgia,serif;">REVIEWER\'S NOTE</div>'
-            f'<div style="font-size:13px;color:#444;line-height:1.8;font-style:italic;font-family:Georgia,serif;">「{comment}」</div>'
-            '</div>'
-        )
+        comment_block = f"""
+<tr><td colspan="2" style="padding:16px 20px 20px;border-top:1px solid #e0dbd4;">
+  <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:8px;font-family:Georgia,serif;">REVIEWER'S NOTE</div>
+  <div style="font-size:13px;color:#444;line-height:1.8;font-style:italic;font-family:Georgia,serif;">「{comment}」</div>
+</td></tr>"""
 
     return f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8"><style>
 * {{ margin:0; padding:0; box-sizing:border-box; }}
-body {{ width:430px; background:#f7f5f2; font-family:'PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif; color:#1a1a1a; }}
+body {{ width:430px; background:#f7f5f2; font-family:'Noto Sans CJK SC','WenQuanYi Micro Hei','Microsoft YaHei',sans-serif; color:#1a1a1a; }}
+table {{ border-collapse:collapse; width:100%; }}
 </style></head><body>
-<div style="background:#fff;border:1px solid #ddd;">
-  <div style="padding:32px 28px 26px;text-align:center;background:#fffdf9;border-bottom:1px solid #e8e2d8;">
-    <div style="font-size:8px;letter-spacing:5px;color:#c8b89a;margin-bottom:10px;font-family:Georgia,serif;">FEMINIST LITERATURE RATING CERTIFICATE</div>
-    <div style="font-size:20px;font-weight:800;color:#111;letter-spacing:3px;line-height:1.3;">女主无CP<br>无男主小说评鉴书</div>
-    <div style="display:flex;align-items:center;gap:10px;margin:14px auto 0;width:200px;">
-      <div style="flex:1;height:1px;background:#e0d5c0;"></div>
-      <div style="width:5px;height:5px;background:#c8b89a;transform:rotate(45deg);flex-shrink:0;"></div>
-      <div style="flex:1;height:1px;background:#e0d5c0;"></div>
-    </div>
-  </div>
-  <div style="border-bottom:2px solid #1a1a1a;">
-    <div style="padding:28px 28px 20px;text-align:center;border-bottom:1px solid #e0dbd4;background:#fff;">
-      <div style="font-size:9px;color:#c8b89a;letter-spacing:4px;margin-bottom:8px;font-family:Georgia,serif;">FINAL SCORE</div>
-      <div style="font-size:88px;font-weight:800;color:{score_color};line-height:1;letter-spacing:-3px;font-family:Georgia,serif;">{sum_rate:.1f}</div>
-      <div style="font-size:11px;color:#bbb;margin-top:6px;letter-spacing:3px;">/ 10</div>
-    </div>
-    <div style="background:#fff;">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 28px;border-bottom:1px solid #f0eeec;">
-        <div>
-          <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:3px;font-family:Georgia,serif;">IMPRESSION</div>
-          <div style="font-size:14px;color:#555;letter-spacing:1px;">印　象　分</div>
-        </div>
-        <div style="font-size:40px;font-weight:300;color:#c09430;letter-spacing:-1px;font-family:Georgia,serif;">+{impressed_rate:.1f}</div>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 28px;border-bottom:1px solid #f0eeec;">
-        <div>
-          <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:3px;font-family:Georgia,serif;">CRITERIA</div>
-          <div style="font-size:14px;color:#555;letter-spacing:1px;">准则扣分 <span style="font-size:11px;color:#bbb;">共{deduct_count}项</span></div>
-        </div>
-        <div style="font-size:40px;font-weight:300;color:#b03a2e;letter-spacing:-1px;font-family:Georgia,serif;">{criteria_deduct:.0f}</div>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 28px;">
-        <div>
-          <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:3px;font-family:Georgia,serif;">ADDITIONAL</div>
-          <div style="font-size:14px;color:#555;letter-spacing:1px;">额外扣分</div>
-        </div>
-        <div style="font-size:40px;font-weight:300;color:#888;letter-spacing:-1px;font-family:Georgia,serif;">−{extra_rate:.1f}</div>
-      </div>
-    </div>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #e0dbd4;">
-    <div style="padding:14px 20px;border-right:1px solid #ece8e0;border-bottom:1px solid #ece8e0;">
-      <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:5px;font-family:Georgia,serif;">TITLE</div>
-      <div style="font-size:15px;font-weight:700;color:#111;">{book_name}</div>
-    </div>
-    <div style="padding:14px 20px;border-bottom:1px solid #ece8e0;">
-      <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:5px;font-family:Georgia,serif;">AUTHOR</div>
-      <div style="font-size:15px;font-weight:700;color:#111;">{book_author or "—"}</div>
-    </div>
-    <div style="padding:14px 20px;border-right:1px solid #ece8e0;">
-      <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:5px;font-family:Georgia,serif;">PLATFORM</div>
-      <div style="font-size:15px;font-weight:700;color:#111;">{book_plate or "—"}</div>
-    </div>
-    <div style="padding:14px 20px;">
-      <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:5px;font-family:Georgia,serif;">REVIEWER · DATE</div>
-      <div style="font-size:13px;font-weight:600;color:#111;">{ich or "—"}<br>{now}</div>
-    </div>
-  </div>
+<table style="background:#fff;border:1px solid #ddd;">
+  <!-- 标题 -->
+  <tr><td colspan="2" style="padding:28px 28px 22px;text-align:center;background:#fffdf9;border-bottom:1px solid #e8e2d8;">
+    <div style="font-size:8px;letter-spacing:4px;color:#c8b89a;margin-bottom:8px;font-family:Georgia,serif;">FEMINIST LITERATURE RATING CERTIFICATE</div>
+    <div style="font-size:20px;font-weight:800;color:#111;letter-spacing:3px;line-height:1.4;">女主无CP<br/>无男主小说评鉴书</div>
+    <div style="margin:12px auto 0;width:180px;border-top:1px solid #e0d5c0;"></div>
+  </td></tr>
+  <!-- 最终分数 -->
+  <tr><td colspan="2" style="padding:24px 28px 18px;text-align:center;border-bottom:1px solid #e0dbd4;background:#fff;">
+    <div style="font-size:9px;color:#c8b89a;letter-spacing:4px;margin-bottom:6px;font-family:Georgia,serif;">FINAL SCORE</div>
+    <div style="font-size:80px;font-weight:800;color:{score_color};line-height:1;letter-spacing:-2px;font-family:Georgia,serif;">{sum_rate:.1f}</div>
+    <div style="font-size:11px;color:#bbb;margin-top:4px;letter-spacing:3px;">/ 10</div>
+  </td></tr>
+  <!-- 印象分 -->
+  <tr>
+    <td style="padding:14px 28px;border-bottom:1px solid #f0eeec;">
+      <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:2px;font-family:Georgia,serif;">IMPRESSION</div>
+      <div style="font-size:13px;color:#555;letter-spacing:1px;">印 象 分</div>
+    </td>
+    <td style="padding:14px 28px;text-align:right;border-bottom:1px solid #f0eeec;">
+      <span style="font-size:36px;font-weight:300;color:#c09430;font-family:Georgia,serif;">+{impressed_rate:.1f}</span>
+    </td>
+  </tr>
+  <!-- 准则扣分 -->
+  <tr>
+    <td style="padding:14px 28px;border-bottom:1px solid #f0eeec;">
+      <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:2px;font-family:Georgia,serif;">CRITERIA</div>
+      <div style="font-size:13px;color:#555;letter-spacing:1px;">准则扣分 <span style="font-size:10px;color:#bbb;">共{deduct_count}项</span></div>
+    </td>
+    <td style="padding:14px 28px;text-align:right;border-bottom:1px solid #f0eeec;">
+      <span style="font-size:36px;font-weight:300;color:#b03a2e;font-family:Georgia,serif;">{criteria_deduct:.0f}</span>
+    </td>
+  </tr>
+  <!-- 额外扣分行 -->
+  <tr>
+    <td style="padding:14px 28px;border-bottom:2px solid #1a1a1a;">
+      <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:2px;font-family:Georgia,serif;">ADDITIONAL</div>
+      <div style="font-size:13px;color:#555;letter-spacing:1px;">额外扣分</div>
+    </td>
+    <td style="padding:14px 28px;text-align:right;border-bottom:2px solid #1a1a1a;">
+      <span style="font-size:36px;font-weight:300;color:#888;font-family:Georgia,serif;">&#8722;{extra_rate:.1f}</span>
+    </td>
+  </tr>
+  <!-- 书名/作者 -->
+  <tr>
+    <td style="padding:12px 20px;border-right:1px solid #ece8e0;border-bottom:1px solid #ece8e0;width:50%;">
+      <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:4px;font-family:Georgia,serif;">TITLE</div>
+      <div style="font-size:14px;font-weight:700;color:#111;">{book_name}</div>
+    </td>
+    <td style="padding:12px 20px;border-bottom:1px solid #ece8e0;width:50%;">
+      <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:4px;font-family:Georgia,serif;">AUTHOR</div>
+      <div style="font-size:14px;font-weight:700;color:#111;">{book_author or "—"}</div>
+    </td>
+  </tr>
+  <!-- 平台/评分人 -->
+  <tr>
+    <td style="padding:12px 20px;border-right:1px solid #ece8e0;border-bottom:1px solid #e0dbd4;">
+      <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:4px;font-family:Georgia,serif;">PLATFORM</div>
+      <div style="font-size:14px;font-weight:700;color:#111;">{book_plate or "—"}</div>
+    </td>
+    <td style="padding:12px 20px;border-bottom:1px solid #e0dbd4;">
+      <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:4px;font-family:Georgia,serif;">REVIEWER · DATE</div>
+      <div style="font-size:12px;font-weight:600;color:#111;">{ich or "—"}<br/>{now}</div>
+    </td>
+  </tr>
   {extra_block}
   {comment_block}
-  <div style="padding:12px 20px;background:#fffdf9;border-top:1px solid #e0dbd4;display:flex;align-items:center;gap:10px;">
-    <div style="flex:1;height:1px;background:#e0d5c0;"></div>
-    <div style="font-size:7px;color:#c8b89a;letter-spacing:3px;font-family:Georgia,serif;white-space:nowrap;">PAGE 1</div>
-    <div style="flex:1;height:1px;background:#e0d5c0;"></div>
-  </div>
-</div>
+  <!-- 页码 -->
+  <tr><td colspan="2" style="padding:10px 20px;background:#fffdf9;border-top:1px solid #e0dbd4;text-align:center;">
+    <span style="font-size:7px;color:#c8b89a;letter-spacing:3px;font-family:Georgia,serif;">PAGE 1</span>
+  </td></tr>
+</table>
 </body></html>"""
 
 
@@ -221,79 +300,98 @@ def build_detail_page_html(book_name, dim_chunks, page_num, principles):
     for dim_zh, dim_en, items in dim_chunks:
         rows = ""
         for (i, is_deduct, remark_text) in items:
-            dot = "#c0392b" if is_deduct else "#aab8b0"
+            dot_color = "#c0392b" if is_deduct else "#aab8b0"
             badge = (
-                '<span style="font-size:13px;font-weight:700;color:#b03a2e;font-family:Georgia,serif;">−1</span>'
+                '<span style="font-size:12px;font-weight:700;color:#b03a2e;font-family:Georgia,serif;">&#8722;1</span>'
                 if is_deduct else
-                '<span style="font-size:13px;color:#ccc;font-family:Georgia,serif;">0</span>'
+                '<span style="font-size:12px;color:#ccc;font-family:Georgia,serif;">0</span>'
             )
-            remark_html = ('<div style="margin-top:4px;color:#aaa;font-size:11px;line-height:1.5;font-style:italic;">↳ ' + remark_text + '</div>') if remark_text else ""
-            sep = "#f0eeec" if is_deduct else "#f5f5f5"
+            remark_html = (
+                f'<div style="margin-top:3px;color:#aaa;font-size:10px;line-height:1.5;font-style:italic;">&#8627; {remark_text}</div>'
+                if remark_text else ""
+            )
             bg = "#fffbfb" if is_deduct else "#fff"
-            rows += (
-                f'<tr style="background:{bg};border-bottom:1px solid {sep};">'
-                f'<td style="padding:11px 8px 11px 20px;width:16px;vertical-align:top;">'
-                f'<div style="width:9px;height:9px;border-radius:50%;background:{dot};margin-top:4px;"></div></td>'
-                f'<td style="padding:11px 8px 11px 0;font-size:13px;color:#2c2c2c;line-height:1.6;vertical-align:top;">'
-                f'<span style="color:#c8b89a;font-size:10px;margin-right:5px;font-family:Georgia,serif;">p{i+1}</span>'
-                f'{principles[i]}' + remark_html + '</td>'
-                f'<td style="padding:11px 20px 11px 8px;text-align:right;vertical-align:top;white-space:nowrap;">{badge}</td>'
-                f'</tr>'
-            )
-        blocks += (
-            '<div>'
-            f'<div style="padding:11px 20px;background:#fff;border-top:1px solid #e0dbd4;display:flex;align-items:baseline;gap:10px;">'
-            f'<span style="font-size:13px;font-weight:700;color:#1a1a1a;letter-spacing:2px;">{dim_zh}</span>'
-            f'<span style="font-size:8px;color:#c8b89a;letter-spacing:3px;">{dim_en}</span>'
-            f'</div>'
-            f'<table style="width:100%;border-collapse:collapse;">{rows}</table>'
-            f'</div>'
-        )
+            sep = "#f0eeec" if is_deduct else "#f5f5f5"
+            rows += f"""
+<tr style="background:{bg};border-bottom:1px solid {sep};">
+  <td style="padding:10px 6px 10px 16px;width:14px;vertical-align:top;">
+    <div style="width:8px;height:8px;border-radius:4px;background:{dot_color};margin-top:3px;"></div>
+  </td>
+  <td style="padding:10px 6px 10px 0;font-size:12px;color:#2c2c2c;line-height:1.6;vertical-align:top;">
+    <span style="color:#c8b89a;font-size:9px;margin-right:4px;font-family:Georgia,serif;">p{i+1}</span>{principles[i]}{remark_html}
+  </td>
+  <td style="padding:10px 16px 10px 6px;text-align:right;vertical-align:top;white-space:nowrap;">{badge}</td>
+</tr>"""
+        blocks += f"""
+<tr><td colspan="3" style="padding:10px 16px;background:#fff;border-top:1px solid #e0dbd4;">
+  <span style="font-size:12px;font-weight:700;color:#1a1a1a;letter-spacing:2px;">{dim_zh}</span>
+  <span style="font-size:8px;color:#c8b89a;letter-spacing:2px;margin-left:8px;">{dim_en}</span>
+</td></tr>
+{rows}"""
 
     return f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8"><style>
 * {{ margin:0; padding:0; box-sizing:border-box; }}
-body {{ width:430px; background:#f7f5f2; font-family:'PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif; color:#1a1a1a; }}
+body {{ width:430px; background:#f7f5f2; font-family:'Noto Sans CJK SC','WenQuanYi Micro Hei','Microsoft YaHei',sans-serif; color:#1a1a1a; }}
+table {{ border-collapse:collapse; width:100%; }}
 </style></head><body>
-<div style="background:#fff;border:1px solid #ddd;">
-  <div style="padding:18px 20px 14px;text-align:center;background:#fffdf9;border-bottom:1px solid #e8e2d8;">
-    <div style="font-size:8px;letter-spacing:5px;color:#c8b89a;font-family:Georgia,serif;">SCORING DETAIL · 评分明细</div>
-    <div style="font-size:14px;font-weight:700;color:#111;margin-top:4px;letter-spacing:2px;">《{book_name}》</div>
-  </div>
-  <div style="display:flex;align-items:center;gap:16px;padding:8px 20px;background:#fafaf8;border-bottom:1px solid #ece8e0;">
-    <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#777;">
-      <div style="width:8px;height:8px;border-radius:50%;background:#c0392b;"></div>扣分（−1）
-    </div>
-    <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#777;">
-      <div style="width:8px;height:8px;border-radius:50%;background:#aab8b0;"></div>无扣分（0）
-    </div>
-  </div>
-  <div>{blocks}</div>
-  <div style="padding:12px 20px;background:#fffdf9;border-top:1px solid #e0dbd4;display:flex;align-items:center;gap:10px;">
-    <div style="flex:1;height:1px;background:#e0d5c0;"></div>
-    <div style="font-size:7px;color:#c8b89a;letter-spacing:3px;font-family:Georgia,serif;white-space:nowrap;">PAGE {page_num}</div>
-    <div style="flex:1;height:1px;background:#e0d5c0;"></div>
-  </div>
-</div>
+<table style="background:#fff;border:1px solid #ddd;">
+  <!-- 标题 -->
+  <tr><td colspan="3" style="padding:16px 20px 12px;text-align:center;background:#fffdf9;border-bottom:1px solid #e8e2d8;">
+    <div style="font-size:8px;letter-spacing:4px;color:#c8b89a;font-family:Georgia,serif;">SCORING DETAIL · 评分明细</div>
+    <div style="font-size:13px;font-weight:700;color:#111;margin-top:3px;letter-spacing:2px;">《{book_name}》</div>
+  </td></tr>
+  <!-- 图例 -->
+  <tr><td colspan="3" style="padding:7px 16px;background:#fafaf8;border-bottom:1px solid #ece8e0;">
+    <span style="display:inline-block;width:8px;height:8px;border-radius:4px;background:#c0392b;margin-right:4px;vertical-align:middle;"></span>
+    <span style="font-size:10px;color:#777;margin-right:14px;">扣分（&#8722;1）</span>
+    <span style="display:inline-block;width:8px;height:8px;border-radius:4px;background:#aab8b0;margin-right:4px;vertical-align:middle;"></span>
+    <span style="font-size:10px;color:#777;">无扣分（0）</span>
+  </td></tr>
+  {blocks}
+  <!-- 页码 -->
+  <tr><td colspan="3" style="padding:10px 20px;background:#fffdf9;border-top:1px solid #e0dbd4;text-align:center;">
+    <span style="font-size:7px;color:#c8b89a;letter-spacing:3px;font-family:Georgia,serif;">PAGE {page_num}</span>
+  </td></tr>
+</table>
 </body></html>"""
+
+
+# ─────────────────────────────────────────────
+# 生成图片（并行渲染加速）
+# ─────────────────────────────────────────────
+
+def html_to_png_bytes(html_str):
+    from weasyprint import HTML as WeasyprintHTML
+    from pdf2image import convert_from_bytes
+    pdf_bytes = WeasyprintHTML(string=html_str).write_pdf()
+    images = convert_from_bytes(pdf_bytes, dpi=150, first_page=1, last_page=1)
+    if images:
+        buf = io.BytesIO()
+        images[0].save(buf, format="PNG")
+        return buf.getvalue()
+    return None
 
 
 if st.button("🖼️ 生成评鉴图片"):
     if not book_name:
         st.warning("请先填写书名！")
     else:
-        with st.spinner("正在生成评鉴证书图片..."):
-            score_color = "#b03a2e" if sum_rate < 4 else ("#a04000" if sum_rate < 6 else ("#1a3a5c" if sum_rate < 8 else "#1d6a3a"))
+        with st.spinner("正在生成评鉴证书图片，请稍候..."):
+            score_color = (
+                "#b03a2e" if sum_rate < 4 else
+                "#a04000" if sum_rate < 6 else
+                "#1a3a5c" if sum_rate < 8 else
+                "#1d6a3a"
+            )
             deduct_count = len(deduct_details)
 
-            # Page 1: summary
             html1 = build_page1_html(
                 book_name, book_author, book_plate, ich, now,
                 impressed_rate, criteria_deduct, extra_rate, sum_rate,
                 deduct_count, score_color, extra_note, comment
             )
 
-            # Build dimension item lists
             dim_defs = [
                 ("作者与作品", "AUTHOR & WORK", 0, 6),
                 ("角色设定",   "CHARACTER DESIGN", 6, 18),
@@ -305,46 +403,31 @@ if st.button("🖼️ 生成评鉴图片"):
                 items = []
                 for i in range(start, end):
                     ans = answers[i] if answers[i] else "—"
-                    is_deduct = (i < 22 and ans == '有') or (i >= 22 and ans == '没有')
+                    is_deduct = (i < 22 and ans == "有") or (i >= 22 and ans == "没有")
                     items.append((i, is_deduct, remarks[i] if remarks[i] else ""))
                 all_dims.append((dim_zh, dim_en, items))
 
-            # Page 2: 作者与作品 + 角色设定
-            # Page 3: 语言叙事 + 立场
             html2 = build_detail_page_html(book_name, all_dims[:2], 2, principles)
             html3 = build_detail_page_html(book_name, all_dims[2:], 3, principles)
 
             pages = [html1, html2, html3]
             page_labels = ["评分总览", "明细·作者与角色", "明细·语言与立场"]
-            img_bytes_list = []
 
-            try:
-                from weasyprint import HTML as WeasyprintHTML
-                from pdf2image import convert_from_bytes
-            except ImportError:
-                import subprocess as _sp, sys as _sys
-                _sp.run([_sys.executable, "-m", "pip", "install", "weasyprint", "pdf2image", "-q"])
-                from weasyprint import HTML as WeasyprintHTML
-                from pdf2image import convert_from_bytes
+            # 并行渲染三页
+            with ThreadPoolExecutor(max_workers=3) as executor:
+                results = list(executor.map(html_to_png_bytes, pages))
 
-            for idx, html in enumerate(pages):
-                try:
-                    import io
-                    pdf_bytes = WeasyprintHTML(string=html).write_pdf()
-                    images = convert_from_bytes(pdf_bytes, dpi=150, first_page=1, last_page=1)
-                    if images:
-                        buf = io.BytesIO()
-                        images[0].save(buf, format="PNG")
-                        img_bytes_list.append((page_labels[idx], buf.getvalue()))
-                except Exception as e:
-                    st.warning(f"第 {idx+1} 页生成失败：{e}")
-
-            if img_bytes_list:
-                for label, img_bytes in img_bytes_list:
+            for label, img_bytes in zip(page_labels, results):
+                if img_bytes:
                     st.markdown(f"#### {label}")
                     st.image(img_bytes, use_container_width=True)
-                    b64 = base64.b64encode(img_bytes).decode()
-                    dl = f'<a href="data:image/png;base64,{b64}" download="{book_name}_{label}.png" style="display:inline-block;background:#111;color:#fff;border-radius:4px;padding:8px 24px;text-decoration:none;font-size:13px;letter-spacing:2px;margin-bottom:20px;">⬇ 下载 {label}</a>'
-                    st.markdown(dl, unsafe_allow_html=True)
-            else:
-                st.error("图片生成失败，请检查环境。")
+                    # 使用 st.download_button，手机端也能下载
+                    st.download_button(
+                        label=f"⬇ 下载 {label}",
+                        data=img_bytes,
+                        file_name=f"{book_name}_{label}.png",
+                        mime="image/png",
+                        key=f"dl_{label}"
+                    )
+                else:
+                    st.warning(f"「{label}」生成失败，请重试。")
