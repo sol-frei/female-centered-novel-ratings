@@ -3,25 +3,15 @@ import subprocess
 import sys
 import shutil
 
-# ── Auto-install wkhtmltopdf on Streamlit Cloud ──────────────
-def _find_wkhtmltoimage():
-    """Return the path to wkhtmltoimage, or None if not found."""
-    for p in ["/usr/local/bin/wkhtmltoimage", "/usr/bin/wkhtmltoimage"]:
-        if os.path.exists(p):
-            return p
-    return shutil.which("wkhtmltoimage")
-
-def _install_wkhtmltopdf():
-    if _find_wkhtmltoimage():
-        return
-    deb_url = "https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.bullseye_amd64.deb"
-    deb_path = "/tmp/wkhtmltox.deb"
-    subprocess.run(["wget", "-q", "-O", deb_path, deb_url], check=True, timeout=120)
-    subprocess.run(["dpkg", "-i", deb_path], capture_output=True)
-    subprocess.run(["apt-get", "install", "-f", "-y"], capture_output=True)
+# ── Auto-install html2image on Streamlit Cloud ──────────────
+def _ensure_html2image():
+    try:
+        import html2image
+    except ImportError:
+        subprocess.run([sys.executable, "-m", "pip", "install", "html2image", "-q"], check=True)
 
 try:
-    _install_wkhtmltopdf()
+    _ensure_html2image()
 except Exception:
     pass
 # ─────────────────────────────────────────────────────────────
@@ -342,19 +332,19 @@ if st.button("🖼️ 生成评鉴图片"):
             page_labels = ["评分总览", "明细·作者与角色", "明细·语言与立场"]
             img_bytes_list = []
 
+            from html2image import Html2Image
+            hti = Html2Image(output_path="/tmp", custom_flags=["--no-sandbox", "--disable-gpu"])
+
             for idx, html in enumerate(pages):
-                tmp_html = f"/tmp/rating_p{idx+1}.html"
-                tmp_png  = f"/tmp/rating_p{idx+1}.png"
-                with open(tmp_html, "w", encoding="utf-8") as f:
-                    f.write(html)
-                subprocess.run(
-                    [_find_wkhtmltoimage() or "wkhtmltoimage", "--width", "430", "--quality", "95",
-                     "--enable-local-file-access", tmp_html, tmp_png],
-                    capture_output=True
-                )
-                if os.path.exists(tmp_png):
-                    with open(tmp_png, "rb") as f:
-                        img_bytes_list.append((page_labels[idx], f.read()))
+                tmp_png = f"rating_p{idx+1}.png"
+                try:
+                    hti.screenshot(html_str=html, save_as=tmp_png, size=(430, 800))
+                    full_path = f"/tmp/{tmp_png}"
+                    if os.path.exists(full_path):
+                        with open(full_path, "rb") as f:
+                            img_bytes_list.append((page_labels[idx], f.read()))
+                except Exception as e:
+                    st.warning(f"第 {idx+1} 页生成失败：{e}")
 
             if img_bytes_list:
                 for label, img_bytes in img_bytes_list:
