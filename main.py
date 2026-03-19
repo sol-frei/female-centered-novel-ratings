@@ -40,29 +40,7 @@ for key, default in [
 ]:
     if key not in st.session_state:
         st.session_state[key] = default
-
-# ─────────────────────────────────────────────
-# 书目信息
-# ─────────────────────────────────────────────
-book_name  = st.text_input("请输入书名：")
-
-# ⚠️ 不给 number_input 设置 key，这样 value= 参数每次 rerun 都生效
-# 一键满分时写入 session_state["impressed_val"]，下一次 rerun 就会读到 10.0
-impressed_rate = st.number_input(
-    "请输入你的印象分*：",
-    min_value=0.0, max_value=10.0, step=1.0,
-    value=float(st.session_state["impressed_val"]),
-)
-# 用户手动改值时也同步到 session_state
-st.session_state["impressed_val"] = impressed_rate
-
-book_author = st.text_input("请输入作者姓名：")
-book_plate  = st.text_input("请输入作品发布平台：")
-ich         = st.text_input("评分人：")
-now         = datetime.now().date()
-
-st.divider()
-
+        
 # ─────────────────────────────────────────────
 # 一键满分打分
 # ─────────────────────────────────────────────
@@ -76,6 +54,31 @@ if st.button("⚡ 一键满分"):
     for i in range(22, 25):
         st.session_state[f"radio_{i}"] = "有"
     st.rerun()
+
+
+# ─────────────────────────────────────────────
+# 书目信息
+# ─────────────────────────────────────────────
+book_name  = st.text_input("请输入书名：")
+
+# ⚠️ 不给 number_input 设置 key，这样 value= 参数每次 rerun 都生效
+# 一键满分时写入 session_state["impressed_val"]，下一次 rerun 就会读到 10.0
+impressed_rate_str = st.text_input("请输入你的印象分*：",
+                                    value=str(st.session_state["impressed_val"]))
+try:
+    impressed_rate = float(impressed_rate_str)
+    impressed_rate = max(0.0, min(10.0, impressed_rate))
+except:
+    impressed_rate = 0.0
+st.session_state["impressed_val"] = impressed_rate
+
+book_author = st.text_input("请输入作者姓名：")
+book_plate  = st.text_input("请输入作品发布平台：")
+ich         = st.text_input("评分人：")
+now         = datetime.now().date()
+
+st.divider()
+
 
 answers = list(st.session_state["answers"])
 remarks = list(st.session_state["remarks"])
