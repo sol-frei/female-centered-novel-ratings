@@ -38,56 +38,45 @@ import random
 st.set_page_config(page_title="女主无CP评分系统", page_icon="📖", layout="wide")
 
 
+
 # ─────────────────────────────────────────────
 # App
 # ─────────────────────────────────────────────
 
-st.title("女主无CP / 无男主小说评分")
+st.title("女主无cp/无男主小说评分")
 
 with st.sidebar:
     st.header("评分规则")
     st.markdown("""
-**1. 打分为减分制**
-完结小说满分为10分，读者根据阅读后体验和感受，给一个印象得分，然后再根据组规进行减分。
-即最终得分 = 印象分 - 减分项，最终得分 < 10分。
+### 1.打分为减分制。
+完结小说满分为10分，读者根据阅读后体验和感受，给一个印象得分，
+然后再根据组规进行减分，
+即最终得分=印象分-减分项，最终得分<10分。
 【谨慎打8分以上，禁止分数膨胀】
 
-**2. 打分规则**
-各项基础扣分分值为1分，情节严重的可以增加扣分分值，无上限，必须列出各项减分项存在与否。
-【❗注意：没有明确标注/不完全/模棱两可的即需要扣分，请各位打分人严格执行！】
-
-**维度说明**
-- 📂 作者与作品（p1–p6）【有 = 扣分】
-- 👤 角色设定（p7–p18）【有 = 扣分】
-- 💬 语言叙事（p19–p22）【有 = 扣分】
-- 🏳️ 立场（p23–p25）【没有 = 扣分】
+### 2.打分规则。
+各项基础扣分分值为1分，情节严重的可以增加扣分分值，无上限，
+必须列出各项减分项存在与否。
+【❗❗❗注意：没有明确标注/提出的、不完全的、模棱两可的即需要扣分，请各位打分人严格执行！！】
 """)
 
 # ── 书目信息 ──
-col1, col2 = st.columns(2)
-with col1:
-    book_name   = st.text_input("书名")
-    book_author = st.text_input("作者")
-with col2:
-    book_plate = st.text_input("发布平台")
-    ich        = st.text_input("评分人")
-
-col3, col4 = st.columns([1, 2])
-with col3:
-    impressed_rate = st.number_input("印象分（满分10）", min_value=0.0, max_value=10.0, step=0.5)
-with col4:
-    now = datetime.now().date()
-    st.caption(f"评分日期：{now}")
+book_name      = st.text_input("请输入书名：")
+_default_impressed = float(st.session_state.pop("impressed_rate_override", 0.0))
+impressed_rate = st.number_input("请输入你的印象分*：", min_value=0.0, max_value=10.0, step=0.5, value=_default_impressed)
+book_author    = st.text_input("请输入作者姓名：")
+book_plate     = st.text_input("请输入作品发布平台：")
+ich            = st.text_input("评分人：")
+now            = datetime.now().date()
 
 st.divider()
 
 # ── 一键随机打分 ──
-if st.button("⚡ 一键随机打分（演示）"):
-    auto = [random.choice(["有", "没有"]) for _ in range(22)]
-    auto += [random.choice(["没有", "没有", "有"]) for _ in range(3)]
-    st.session_state.answers = auto
+if st.button("⚡ 一键满分打分"):
+    st.session_state.answers = ["没有"] * 22 + ["有"] * 3
     st.session_state.remarks = [""] * 25
-    st.success("已随机生成打分结果，可在下方调整。")
+    st.session_state.impressed_rate_override = 10.0
+    st.success("已生成满分评分结果，可在下方调整。")
 
 if "answers" not in st.session_state:
     st.session_state.answers = [None] * 25
@@ -99,29 +88,25 @@ remarks = list(st.session_state.remarks)
 
 # ── 按维度打分 ──
 dimensions = [
-    ("📂 作者与作品", 0, 6,  "有"),
-    ("👤 角色设定",   6, 18, "有"),
-    ("💬 语言叙事",  18, 22, "有"),
-    ("🏳️ 立场",     22, 25, "没有"),
+    ("📂 作者与作品", 0,  6,  "有"),
+    ("👤 角色设定",   6,  18, "有"),
+    ("💬 语言叙事",   18, 22, "有"),
+    ("🏳️ 立场",      22, 25, "没有"),
 ]
 
 for dim_name, start, end, deduct_when in dimensions:
     st.subheader(dim_name)
     for i in range(start, end):
-        cols = st.columns([5, 2, 3])
-        with cols[0]:
-            hint = f"【{deduct_when} = 扣分】"
-            st.write(f"**p{i+1}** {principles[i]}")
-            st.caption(hint)
-        with cols[1]:
+        st.markdown(f"**{i+1}、{principles[i]}**")
+        col_radio, col_empty = st.columns([2, 5])
+        with col_radio:
             default_idx = 0 if answers[i] == "有" else (1 if answers[i] == "没有" else None)
             q = st.radio("", ["有", "没有"], index=default_idx,
                          key=f"radio_{i}", label_visibility="collapsed", horizontal=True)
             answers[i] = q
-        with cols[2]:
-            r = st.text_input("", value=remarks[i], key=f"remark_{i}",
-                              placeholder="备注（可选）", label_visibility="collapsed")
-            remarks[i] = r
+        remarks[i] = st.text_area("备注", value=remarks[i],
+                                   key=f"remark_{i}", label_visibility="collapsed",
+                                   placeholder="备注（可选）")
 
 st.session_state.answers = answers
 st.session_state.remarks = remarks
@@ -129,13 +114,29 @@ st.session_state.remarks = remarks
 st.divider()
 
 # ── 额外扣分 & 评语 ──
-col5, col6 = st.columns([1, 2])
-with col5:
-    extra_rate = st.number_input("其它恶劣情节额外扣分", min_value=0.0, max_value=10.0, step=0.5)
-with col6:
-    extra_note = st.text_area("额外扣分备注")
+extra_rate = st.number_input("因为其它恶劣情节，我还想减分：", min_value=0.0, max_value=10.0, step=0.5)
+extra_note = st.text_area("备注：")
+comment    = st.text_area("爱女姐有话说：")
 
-comment = st.text_area("评分人综合评语")
+# ── 计算分数 ──
+y, n = "有", "没有"
+r = [0] * 25
+deduct_details = []
+
+for i, answer in enumerate(answers[:22]):
+    if answer == y:
+        r[i] = -1
+        deduct_details.append(f"p{i+1}")
+
+for i, answer in enumerate(answers[22:], 22):
+    if answer == n:
+        r[i] = -1
+        deduct_details.append(f"p{i+1}")
+
+criteria_deduct = sum(r)
+sum_rate = impressed_rate + criteria_deduct - extra_rate
+
+st.write(f"最终评分为：{sum_rate}")
 
 
 # ─────────────────────────────────────────────
