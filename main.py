@@ -66,11 +66,15 @@ st.divider()
 # ─────────────────────────────────────────────
 # 一键满分打分
 # ─────────────────────────────────────────────
-if st.button("⚡ 一键满分打分"):
+if st.button("⚡ 一键满分"):
     st.session_state["answers"]       = ["没有"] * 22 + ["有"] * 3
     st.session_state["remarks"]       = [""] * 25
     st.session_state["impressed_val"] = 10.0
-    st.session_state["generated_imgs"] = None  # 清除旧图片
+    st.session_state["generated_imgs"] = None
+    for i in range(22):
+        st.session_state[f"radio_{i}"] = "没有"
+    for i in range(22, 25):
+        st.session_state[f"radio_{i}"] = "有"
     st.rerun()
 
 answers = list(st.session_state["answers"])
