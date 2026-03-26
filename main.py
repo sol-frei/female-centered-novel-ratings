@@ -20,7 +20,7 @@ with st.sidebar:
 ### 1.打分为减分制。
 完结小说满分为10分，读者根据阅读后体验和感受，给一个印象得分，
 然后再根据组规进行减分，
-即最终得分=印象分-减分项，最终得分<=10分。
+即最终得分=印象分-减分项，最终得分<10分。
 【谨慎打8分以上，禁止分数膨胀】
 
 ### 2.打分规则。
@@ -63,16 +63,14 @@ book_name  = st.text_input("请输入书名：")
 
 # ⚠️ 不给 number_input 设置 key，这样 value= 参数每次 rerun 都生效
 # 一键满分时写入 session_state["impressed_val"]，下一次 rerun 就会读到 10.0
-impressed_rate_str = st.text_input("请输入你的印象分*：",
-                                    value="" if st.session_state["impressed_val"] == 0.0 else str(st.session_state["impressed_val"]))
+impressed_rate = st.number_input(
+    "请输入你的印象分*：",
+    min_value=0.0,
+    max_value=10.0,
+    step=1.0,
+    value=st.session_state["impressed_val"],
+)
 st.caption("印象分范围：0 ~ 10")
-try:
-    impressed_rate = float(impressed_rate_str)
-    if impressed_rate > 10.0:
-        st.warning("⚠️ 印象分不能超过 10 分，已自动调整为 10 分。")
-    impressed_rate = max(0.0, min(10.0, impressed_rate))
-except:
-    impressed_rate = 0.0
 st.session_state["impressed_val"] = impressed_rate
 
 book_author = st.text_input("请输入作者姓名：")
