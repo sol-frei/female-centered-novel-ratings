@@ -210,8 +210,8 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
     if comment:
         comment_rows = f"""
   <tr><td colspan="2" style="padding:14px 20px 18px;">
-    <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:6px;font-family:Georgia,serif;">爱女姐有话说</div>
-    <div style="font-size:14px;color:#222;line-height:1.9;">「{comment}」</div>
+    <div style="font-size:15px;color:#c8b89a;letter-spacing:1px;margin-bottom:6px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">爱女姐有话说</div>
+    <div style="font-size:15px;color:#222;line-height:1.9;">「{comment}」</div>
   </td></tr>"""
 
     return f"""<!DOCTYPE html>
