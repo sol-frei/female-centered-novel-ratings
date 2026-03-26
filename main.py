@@ -20,7 +20,7 @@ with st.sidebar:
 ### 1.打分为减分制。
 完结小说满分为10分，读者根据阅读后体验和感受，给一个印象得分，
 然后再根据组规进行减分，
-即最终得分=印象分-减分项，最终得分<10分。
+即最终得分=印象分-减分项，最终得分<=10分。
 【谨慎打8分以上，禁止分数膨胀】
 
 ### 2.打分规则。
@@ -68,6 +68,8 @@ impressed_rate_str = st.text_input("请输入你的印象分*：",
 st.caption("印象分范围：0 ~ 10")
 try:
     impressed_rate = float(impressed_rate_str)
+    if impressed_rate > 10.0:
+        st.warning("⚠️ 印象分不能超过 10 分，已自动调整为 10 分。")
     impressed_rate = max(0.0, min(10.0, impressed_rate))
 except:
     impressed_rate = 0.0
@@ -201,8 +203,8 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
     if extra_rate > 0 or extra_note:
         extra_rows = f"""
   <tr><td colspan="2" style="padding:12px 20px;border-bottom:1px solid #e0dbd4;">
-    <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:6px;font-family:Georgia,serif;">ADDITIONAL DEDUCTION · 额外扣分</div>
-    <div style="font-size:12px;color:#333;line-height:1.6;">{extra_note}</div>
+    <div style="font-size:15px;color:#c8b89a;letter-spacing:1px;margin-bottom:6px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">额外扣分</div>
+    <div style="font-size:15px;color:#333;line-height:1.6;">{extra_note}</div>
     <div style="font-size:11px;color:#b03a2e;font-weight:700;margin-top:3px;font-family:Georgia,serif;">&#8722;{extra_rate:.1f} 分</div>
   </td></tr>"""
 
