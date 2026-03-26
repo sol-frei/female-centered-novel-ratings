@@ -211,7 +211,7 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
         comment_rows = f"""
   <tr><td colspan="2" style="padding:14px 20px 18px;">
     <div style="font-size:8px;color:#c8b89a;letter-spacing:3px;margin-bottom:6px;font-family:Georgia,serif;">爱女姐有话说</div>
-    <div style="font-size:12px;color:#444;line-height:1.8;font-style:italic;font-family:Georgia,serif;">「{comment}」</div>
+    <div style="font-size:14px;color:#222;line-height:1.9;">「{comment}」</div>
   </td></tr>"""
 
     return f"""<!DOCTYPE html>
@@ -256,21 +256,21 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
   </tr>
   <tr>
     <td style="padding:11px 18px;border-right:1px solid #ece8e0;border-bottom:1px solid #ece8e0;width:50%;">
-      <div style="font-size:7px;color:#c8b89a;letter-spacing:3px;margin-bottom:3px;font-family:Georgia,serif;">作品</div>
+      <div style="font-size:7px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">作品</div>
       <div style="font-size:13px;font-weight:700;color:#111;">{book_name}</div>
     </td>
     <td style="padding:11px 18px;border-bottom:1px solid #ece8e0;width:50%;">
-      <div style="font-size:7px;color:#c8b89a;letter-spacing:3px;margin-bottom:3px;font-family:Georgia,serif;">作者</div>
+      <div style="font-size:7px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">作者</div>
       <div style="font-size:13px;font-weight:700;color:#111;">{book_author or "—"}</div>
     </td>
   </tr>
   <tr>
     <td style="padding:11px 18px;border-right:1px solid #ece8e0;border-bottom:1px solid #e0dbd4;">
-      <div style="font-size:7px;color:#c8b89a;letter-spacing:3px;margin-bottom:3px;font-family:Georgia,serif;">平台</div>
+      <div style="font-size:7px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">平台</div>
       <div style="font-size:13px;font-weight:700;color:#111;">{book_plate or "—"}</div>
     </td>
     <td style="padding:11px 18px;border-bottom:1px solid #e0dbd4;">
-      <div style="font-size:7px;color:#c8b89a;letter-spacing:3px;margin-bottom:3px;font-family:Georgia,serif;">评分人 · 日期</div>
+      <div style="font-size:7px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">评分人 · 日期</div>
       <div style="font-size:12px;font-weight:600;color:#111;">{ich or "—"}<br/>{now}</div>
     </td>
   </tr>
@@ -295,7 +295,7 @@ def build_detail_page_html(book_name, dim_chunks, page_num, principles):
                 '<span style="font-size:11px;color:#ccc;font-family:Georgia,serif;">0</span>'
             )
             remark_html = (
-                f'<div style="margin-top:2px;color:#aaa;font-size:10px;line-height:1.5;font-style:italic;">&#8627; {remark_text}</div>'
+                f'<div style="margin-top:4px;color:#555;font-size:12px;line-height:1.6;">&#8627; {remark_text}</div>'
                 if remark_text else ""
             )
             bg = "#fffbfb" if is_deduct else "#fff"
