@@ -256,21 +256,21 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
   </tr>
   <tr>
     <td style="padding:11px 18px;border-right:1px solid #ece8e0;border-bottom:1px solid #ece8e0;width:50%;">
-      <div style="font-size:7px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">作品</div>
+      <div style="font-size:13px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">作品</div>
       <div style="font-size:13px;font-weight:700;color:#111;">{book_name}</div>
     </td>
     <td style="padding:11px 18px;border-bottom:1px solid #ece8e0;width:50%;">
-      <div style="font-size:7px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">作者</div>
+      <div style="font-size:13px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">作者</div>
       <div style="font-size:13px;font-weight:700;color:#111;">{book_author or "—"}</div>
     </td>
   </tr>
   <tr>
     <td style="padding:11px 18px;border-right:1px solid #ece8e0;border-bottom:1px solid #e0dbd4;">
-      <div style="font-size:7px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">平台</div>
+      <div style="font-size:13px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">平台</div>
       <div style="font-size:13px;font-weight:700;color:#111;">{book_plate or "—"}</div>
     </td>
     <td style="padding:11px 18px;border-bottom:1px solid #e0dbd4;">
-      <div style="font-size:7px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">评分人 · 日期</div>
+      <div style="font-size:13px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">评分人 · 日期</div>
       <div style="font-size:12px;font-weight:600;color:#111;">{ich or "—"}<br/>{now}</div>
     </td>
   </tr>
