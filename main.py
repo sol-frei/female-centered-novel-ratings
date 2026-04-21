@@ -199,7 +199,7 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
         extra_rows = f"""
   <tr><td colspan="2" style="padding:12px 20px;border-bottom:1px solid #e0dbd4;">
     <div style="font-size:15px;color:#c8b89a;letter-spacing:1px;margin-bottom:6px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">额外扣分</div>
-    <div style="font-size:15px;color:#333;line-height:1.6;">{extra_note}</div>
+    <div style="font-size:15px;color:#333;line-height:1.6;padding-left:2em;">{extra_note}</div>
     <div style="font-size:11px;color:#b03a2e;font-weight:700;margin-top:3px;font-family:Georgia,serif;">&#8722;{extra_rate:.1f} 分</div>
   </td></tr>"""
 
@@ -218,7 +218,7 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
 <table style="background:#fff;border:1px solid #ddd;">
   <tr><td colspan="2" style="padding:26px 24px 20px;text-align:center;background:#fffdf9;border-bottom:1px solid #e8e2d8;">
     <div style="font-size:7px;letter-spacing:4px;color:#c8b89a;margin-bottom:8px;font-family:Georgia,serif;">FEMINIST LITERATURE RATING CERTIFICATE</div>
-    <div style="font-size:18px;font-weight:800;color:#111;letter-spacing:3px;line-height:1.5;">女主无CP/无男主小说评分</div>
+    <div style="font-size:18px;font-weight:800;color:#111;letter-spacing:3px;line-height:1.5;">女主无cp/无男主小说评分</div>
     <div style="margin:10px auto 0;width:160px;border-top:1px solid #e0d5c0;"></div>
   </td></tr>
   <tr><td colspan="2" style="padding:22px 24px 16px;text-align:center;border-bottom:1px solid #e0dbd4;background:#fff;">
