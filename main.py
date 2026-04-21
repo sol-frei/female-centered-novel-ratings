@@ -68,7 +68,7 @@ impressed_rate = st.number_input(
     step=1.0,
     value=st.session_state["impressed_val"],
 )
-st.caption("印象分范围：0 ~ 10")
+st.caption("印象分范围：0 ~ 10，谨慎打8分以上，禁止分数膨胀")
 st.session_state["impressed_val"] = impressed_rate
 
 book_author = st.text_input("请输入作者姓名：")
@@ -199,7 +199,7 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
         extra_rows = f"""
   <tr><td colspan="2" style="padding:12px 20px;border-bottom:1px solid #e0dbd4;">
     <div style="font-size:15px;color:#c8b89a;letter-spacing:1px;margin-bottom:6px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">额外扣分</div>
-    <div style="font-size:15px;color:#333;line-height:1.6;padding-left:2em;">{extra_note}</div>
+    <div style="font-size:15px;color:#333;line-height:1.6;">{extra_note}</div>
     <div style="font-size:11px;color:#b03a2e;font-weight:700;margin-top:3px;font-family:Georgia,serif;">&#8722;{extra_rate:.1f} 分</div>
   </td></tr>"""
 
@@ -218,7 +218,7 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
 <table style="background:#fff;border:1px solid #ddd;">
   <tr><td colspan="2" style="padding:26px 24px 20px;text-align:center;background:#fffdf9;border-bottom:1px solid #e8e2d8;">
     <div style="font-size:7px;letter-spacing:4px;color:#c8b89a;margin-bottom:8px;font-family:Georgia,serif;">FEMINIST LITERATURE RATING CERTIFICATE</div>
-    <div style="font-size:18px;font-weight:800;color:#111;letter-spacing:3px;line-height:1.5;">《{book_name}》</div>
+    <div style="font-size:18px;font-weight:800;color:#111;letter-spacing:3px;line-height:1.5;">女主无CP/无男主小说评分</div>
     <div style="margin:10px auto 0;width:160px;border-top:1px solid #e0d5c0;"></div>
   </td></tr>
   <tr><td colspan="2" style="padding:22px 24px 16px;text-align:center;border-bottom:1px solid #e0dbd4;background:#fff;">
@@ -254,16 +254,22 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
     </td>
   </tr>
   <tr>
-    <td style="padding:11px 14px;border-right:1px solid #ece8e0;border-bottom:1px solid #e0dbd4;width:33%;">
-      <div style="font-size:11px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">作者</div>
+    <td style="padding:11px 18px;border-right:1px solid #ece8e0;border-bottom:1px solid #ece8e0;width:50%;">
+      <div style="font-size:13px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">作品</div>
+      <div style="font-size:13px;font-weight:700;color:#111;">{book_name}</div>
+    </td>
+    <td style="padding:11px 18px;border-bottom:1px solid #ece8e0;width:50%;">
+      <div style="font-size:13px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">作者</div>
       <div style="font-size:13px;font-weight:700;color:#111;">{book_author or "—"}</div>
     </td>
-    <td style="padding:11px 14px;border-right:1px solid #ece8e0;border-bottom:1px solid #e0dbd4;width:33%;">
-      <div style="font-size:11px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">平台</div>
+  </tr>
+  <tr>
+    <td style="padding:11px 18px;border-right:1px solid #ece8e0;border-bottom:1px solid #e0dbd4;">
+      <div style="font-size:13px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">平台</div>
       <div style="font-size:13px;font-weight:700;color:#111;">{book_plate or "—"}</div>
     </td>
-    <td style="padding:11px 14px;border-bottom:1px solid #e0dbd4;width:34%;">
-      <div style="font-size:11px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">评分人 · 日期</div>
+    <td style="padding:11px 18px;border-bottom:1px solid #e0dbd4;">
+      <div style="font-size:13px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">评分人 · 日期</div>
       <div style="font-size:12px;font-weight:600;color:#111;">{ich or "—"}<br/>{now}</div>
     </td>
   </tr>
