@@ -199,7 +199,7 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
         extra_rows = f"""
   <tr><td colspan="2" style="padding:12px 20px;border-bottom:1px solid #e0dbd4;">
     <div style="font-size:15px;color:#c8b89a;letter-spacing:1px;margin-bottom:6px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">额外扣分</div>
-    <div style="font-size:15px;color:#333;line-height:1.6;padding-left:2em;">{extra_note}</div>
+    <div style="font-size:15px;color:#333;line-height:1.6;padding-left:1em;">{extra_note}</div>
     <div style="font-size:11px;color:#b03a2e;font-weight:700;margin-top:3px;font-family:Georgia,serif;">&#8722;{extra_rate:.1f} 分</div>
   </td></tr>"""
 
