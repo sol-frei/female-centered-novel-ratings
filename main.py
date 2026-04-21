@@ -294,7 +294,7 @@ def build_detail_page_html(book_name, dim_chunks, page_num, principles):
                 '<span style="font-size:11px;color:#ccc;font-family:Georgia,serif;">0</span>'
             )
             remark_html = (
-                f'<div style="margin-top:4px;color:#555;font-size:12px;line-height:1.6;"> {remark_text}</div>'
+                f'<div style="margin-top:4px;color:#555;font-size:12px;line-height:1.6;padding-left:2em;">{remark_text}</div>'
                 if remark_text else ""
             )
             bg = "#fffbfb" if is_deduct else "#fff"
