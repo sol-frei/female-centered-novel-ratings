@@ -9,7 +9,7 @@ import streamlit as st
 import pandas as pd
 from principle import principles, dimension_labels
 
-st.set_page_config(page_title="女主无CP/无男主评分", page_icon="📖", layout="wide")
+st.set_page_config(page_title="女主无cp/无男主评分", page_icon="📖", layout="wide")
 
 # ─────────────────────────────────────────────
 # Sidebar
@@ -68,7 +68,7 @@ impressed_rate = st.number_input(
     step=1.0,
     value=st.session_state["impressed_val"],
 )
-st.caption("印象分范围：0 ~ 10，谨慎打8分以上，禁止分数膨胀")
+st.caption("印象分范围：0 ~ 10")
 st.session_state["impressed_val"] = impressed_rate
 
 book_author = st.text_input("请输入作者姓名：")
@@ -306,7 +306,7 @@ def build_detail_page_html(book_name, dim_chunks, page_num, principles):
     <div style="width:7px;height:7px;border-radius:50%;background:{dot_color};margin-top:3px;"></div>
   </td>
   <td style="padding:9px 5px 9px 0;font-size:12px;color:#2c2c2c;line-height:1.6;vertical-align:top;border-bottom:1px solid {sep};">
-    <span style="color:#7a6a55;font-size:11px;font-weight:600;margin-right:5px;font-family:Georgia,serif;">{i+1}</span>{principles[i]}{remark_html}
+    <span style="color:#7a6a55;font-size:13px;font-weight:600;margin-right:5px;font-family:Georgia,serif;">{i+1}.</span>{principles[i]}{remark_html}
   </td>
   <td style="padding:9px 14px 9px 5px;text-align:right;vertical-align:top;white-space:nowrap;border-bottom:1px solid {sep};">{badge}</td>
 </tr>"""
