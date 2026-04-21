@@ -36,7 +36,7 @@ for key, default in [
     ("answers",       [None] * 25),
     ("remarks",       [""] * 25),
     ("impressed_val", 0.0),
-    ("generated_imgs", None),   # 存储已生成的图片，防止 rerun 后消失
+    ("generated_imgs", None),
 ]:
     if key not in st.session_state:
         st.session_state[key] = default
@@ -61,8 +61,6 @@ if st.button("⚡ 一键满分"):
 # ─────────────────────────────────────────────
 book_name  = st.text_input("请输入书名：")
 
-# ⚠️ 不给 number_input 设置 key，这样 value= 参数每次 rerun 都生效
-# 一键满分时写入 session_state["impressed_val"]，下一次 rerun 就会读到 10.0
 impressed_rate = st.number_input(
     "请输入你的印象分*：",
     min_value=0.0,
@@ -70,7 +68,7 @@ impressed_rate = st.number_input(
     step=1.0,
     value=st.session_state["impressed_val"],
 )
-st.caption("印象分范围：0 ~ 10")
+st.caption("印象分范围：0 ~ 10，谨慎打8分以上，禁止分数膨胀")
 st.session_state["impressed_val"] = impressed_rate
 
 book_author = st.text_input("请输入作者姓名：")
@@ -177,10 +175,9 @@ st.write(f"最终评分为：{sum_rate}")
 
 
 # ─────────────────────────────────────────────
-# HTML 构建（纯 table + 固定页面尺寸，解决 WeasyPrint 排版问题）
+# HTML 构建
 # ─────────────────────────────────────────────
 
-# WeasyPrint 的关键修复：@page 设置页面宽高等于内容，禁止自动分页
 _WEASY_BASE_STYLE = """
 <style>
 @page { size: 430px auto; margin: 0; }
@@ -214,6 +211,8 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
     <div style="font-size:15px;color:#222;line-height:1.9;">「{comment}」</div>
   </td></tr>"""
 
+    # FIX 1: Changed "额外扣分" row border from `2px solid #1a1a1a` to `1px solid #e0dbd4`
+    #         to match the soft divider style used throughout the rest of the card.
     return f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8">{_WEASY_BASE_STYLE}</head><body>
 <table style="background:#fff;border:1px solid #ddd;">
@@ -246,11 +245,11 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
     </td>
   </tr>
   <tr>
-    <td style="padding:13px 24px;border-bottom:2px solid #1a1a1a;">
+    <td style="padding:13px 24px;border-bottom:1px solid #e0dbd4;">
       <div style="font-size:7px;color:#c8b89a;letter-spacing:3px;margin-bottom:2px;font-family:Georgia,serif;">ADDITIONAL</div>
       <div style="font-size:13px;color:#555;letter-spacing:1px;">额外扣分</div>
     </td>
-    <td style="padding:13px 24px;text-align:right;border-bottom:2px solid #1a1a1a;">
+    <td style="padding:13px 24px;text-align:right;border-bottom:1px solid #e0dbd4;">
       <span style="font-size:32px;font-weight:300;color:#888;font-family:Georgia,serif;">&#8722;{extra_rate:.1f}</span>
     </td>
   </tr>
@@ -300,13 +299,14 @@ def build_detail_page_html(book_name, dim_chunks, page_num, principles):
             )
             bg = "#fffbfb" if is_deduct else "#fff"
             sep = "#f0eeec" if is_deduct else "#f5f5f5"
+            # FIX 2: removed "p" prefix; number is now color:#7a6a55, font-size:11px, font-weight:600
             rows += f"""
 <tr style="background:{bg};">
   <td style="padding:9px 5px 9px 14px;width:14px;vertical-align:top;border-bottom:1px solid {sep};">
     <div style="width:7px;height:7px;border-radius:50%;background:{dot_color};margin-top:3px;"></div>
   </td>
   <td style="padding:9px 5px 9px 0;font-size:12px;color:#2c2c2c;line-height:1.6;vertical-align:top;border-bottom:1px solid {sep};">
-    <span style="color:#c8b89a;font-size:9px;margin-right:4px;font-family:Georgia,serif;">p{i+1}</span>{principles[i]}{remark_html}
+    <span style="color:#7a6a55;font-size:11px;font-weight:600;margin-right:5px;font-family:Georgia,serif;">{i+1}</span>{principles[i]}{remark_html}
   </td>
   <td style="padding:9px 14px 9px 5px;text-align:right;vertical-align:top;white-space:nowrap;border-bottom:1px solid {sep};">{badge}</td>
 </tr>"""
@@ -339,15 +339,13 @@ def build_detail_page_html(book_name, dim_chunks, page_num, principles):
 
 
 # ─────────────────────────────────────────────
-# 渲染函数（WeasyPrint，缓存字体实例加速）
+# 渲染函数
 # ─────────────────────────────────────────────
 
 @st.cache_resource
 def get_weasyprint_html_class():
-    """缓存 WeasyPrint 的 HTML 类，避免每次重新初始化字体，大幅提速。"""
     from weasyprint import HTML as WeasyprintHTML
     return WeasyprintHTML
-
 
 
 def html_to_png_bytes(html_str):
@@ -359,7 +357,7 @@ def html_to_png_bytes(html_str):
         )
         page = browser.new_page(
             viewport={"width": 430, "height": 800},
-            device_scale_factor=3  # 加这一行，3倍清晰度
+            device_scale_factor=3
         )
         page.set_content(html_str, wait_until="networkidle")
         height = page.evaluate("document.body.scrollHeight")
@@ -409,16 +407,14 @@ if st.button("生成图片"):
             html2 = build_detail_page_html(book_name, all_dims[:2], 2, principles)
             html3 = build_detail_page_html(book_name, all_dims[2:], 3, principles)
 
-            # 并行渲染三页
             with ThreadPoolExecutor(max_workers=3) as executor:
                 results = list(executor.map(html_to_png_bytes, [html1, html2, html3]))
 
             page_labels = ["评分总览", "明细·作者与角色", "明细·语言与立场"]
-            # ✅ 存入 session_state，download_button 触发 rerun 后仍能显示
             st.session_state["generated_imgs"] = list(zip(page_labels, results))
 
 # ─────────────────────────────────────────────
-# 显示图片区（从 session_state 读取，rerun 安全）
+# 显示图片区
 # ─────────────────────────────────────────────
 if st.session_state["generated_imgs"]:
     st.divider()
