@@ -68,7 +68,7 @@ impressed_rate = st.number_input(
     step=1.0,
     value=st.session_state["impressed_val"],
 )
-st.caption("印象分范围：0 ~ 10")
+st.caption("印象分范围：0 ~ 10，谨慎打8分以上，禁止分数膨胀")
 st.session_state["impressed_val"] = impressed_rate
 
 book_author = st.text_input("请输入作者姓名：")
