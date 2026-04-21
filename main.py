@@ -9,7 +9,7 @@ import streamlit as st
 import pandas as pd
 from principle import principles, dimension_labels
 
-st.set_page_config(page_title="女主无cp/无男主评分", page_icon="📖", layout="wide")
+st.set_page_config(page_title="女主无cp/无男主小说评分", page_icon="📖", layout="wide")
 
 # ─────────────────────────────────────────────
 # Sidebar
