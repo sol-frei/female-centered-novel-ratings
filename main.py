@@ -270,7 +270,7 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
       <div style="font-size:15px;color:#c8b89a;letter-spacing:1px;margin-bottom:4px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">评分人 · 日期</div>
       <div style="display:flex; justify-content:space-between; align-items:center; font-size:17px; color:#111; font-weight:600;">
     <span>{ich or "—"}</span>
-    <span>日期: {now}</span>
+    <span> · {now}</span>
 </div>
     </td>
   </tr>
@@ -312,7 +312,7 @@ def build_detail_page_html(book_name, dim_chunks, page_num, principles):
 </tr>"""
         blocks += f"""
 <tr><td colspan="3" style="padding:9px 14px;background:#fafaf8;border-top:1px solid #e0dbd4;border-bottom:1px solid #e0dbd4;">
-  <span style="font-size:12px;font-weight:700;color:#1a1a1a;letter-spacing:1px;">{dim_zh}</span>
+  <span style="font-size:16px;font-weight:700;color:#1a1a1a;letter-spacing:1px;">{dim_zh}</span>
   <span style="font-size:7px;color:#c8b89a;letter-spacing:2px;margin-left:7px;font-family:Georgia,serif;">{dim_en}</span>
 </td></tr>
 {rows}"""
