@@ -200,7 +200,7 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
   <tr><td colspan="2" style="padding:12px 20px;border-bottom:1px solid #e0dbd4;">
     <div style="font-size:16px;color:#c8b89a;letter-spacing:1px;margin-bottom:6px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">额外扣分</div>
     <div style="font-size:17px;color:#333;line-height:1.7;padding-left:1em;white-space:pre-wrap;">{extra_note}</div>
-    <div style="font-size:12px;color:#b03a2e;font-weight:700;margin-top:3px;font-family:Georgia,serif;text-align:right;">&#8722;{extra_rate:.1f} 分</div>
+    <div style="font-size:12px;color:#b03a2e;font-weight:700;margin-top:7px;font-family:Georgia,serif;text-align:right;">&#8722;{extra_rate:.1f} 分</div>
   </td></tr>"""
 
     comment_rows = ""
@@ -227,7 +227,7 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
   <tr>
     <td style="padding:13px 24px;border-bottom:1px solid #f0eeec;">
       <div style="font-size:7px;color:#c8b89a;letter-spacing:3px;margin-bottom:2px;font-family:Georgia,serif;">IMPRESSION</div>
-      <div style="font-size:17px;color:#555;letter-spacing:1px;">印 象 分</div>
+      <div style="font-size:15px;color:#555;letter-spacing:1px;">印 象 分</div>
     </td>
     <td style="padding:13px 24px;text-align:right;border-bottom:1px solid #f0eeec;">
       <span style="font-size:32px;font-weight:300;color:#c09430;font-family:Georgia,serif;">{impressed_rate:.1f}</span>
@@ -236,7 +236,7 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
   <tr>
     <td style="padding:13px 24px;border-bottom:1px solid #f0eeec;">
       <div style="font-size:7px;color:#c8b89a;letter-spacing:3px;margin-bottom:2px;font-family:Georgia,serif;">CRITERIA</div>
-      <div style="font-size:17px;color:#555;letter-spacing:1px;">准则扣分</div>
+      <div style="font-size:15px;color:#555;letter-spacing:1px;">准则扣分</div>
     </td>
     <td style="padding:13px 24px;text-align:right;border-bottom:1px solid #f0eeec;">
       <span style="font-size:32px;font-weight:300;color:#b03a2e;font-family:Georgia,serif;">{criteria_deduct:.0f}</span>
@@ -245,7 +245,7 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
   <tr>
     <td style="padding:13px 24px;border-bottom:1px solid #e0dbd4;">
       <div style="font-size:7px;color:#c8b89a;letter-spacing:3px;margin-bottom:2px;font-family:Georgia,serif;">ADDITIONAL</div>
-      <div style="font-size:17px;color:#555;letter-spacing:1px;">额外扣分</div>
+      <div style="font-size:15px;color:#555;letter-spacing:1px;">额外扣分</div>
     </td>
     <td style="padding:13px 24px;text-align:right;border-bottom:1px solid #e0dbd4;">
       <span style="font-size:32px;font-weight:300;color:#888;font-family:Georgia,serif;">&#8722;{extra_rate:.1f}</span>
@@ -269,7 +269,7 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
     <td style="padding:11px 18px;border-bottom:1px solid #e0dbd4;">
       <div style="font-size:15px;color:#c8b89a;letter-spacing:1px;margin-bottom:4px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">评分人 · 日期</div>
       <div style="display:flex; justify-content:space-between; align-items:center; font-size:17px; color:#111; font-weight:600;">
-    <span>评分人: {ich or "—"}</span>
+    <span>{ich or "—"}</span>
     <span>日期: {now}</span>
 </div>
     </td>
@@ -290,9 +290,9 @@ def build_detail_page_html(book_name, dim_chunks, page_num, principles):
         for (i, is_deduct, remark_text) in items:
             dot_color = "#c0392b" if is_deduct else "#aab8b0"
             badge = (
-                '<span style="font-size:18px;font-weight:700;color:#b03a2e;font-family:Georgia,serif;">&#8722;1</span>'
+                '<span style="font-size:17px;font-weight:700;color:#b03a2e;font-family:Georgia,serif;">&#8722;1</span>'
                 if is_deduct else
-                '<span style="font-size:11px;color:#ccc;font-family:Georgia,serif;">0</span>'
+                '<span style="font-size:17px;color:#ccc;font-family:Georgia,serif;">0</span>'
             )
             remark_html = (
                 f'<div style="margin-top:5px;color:#555;font-size:17px;line-height:1.7;padding-left:2em;white-space:pre-wrap;">{remark_text}</div>'
@@ -326,9 +326,9 @@ def build_detail_page_html(book_name, dim_chunks, page_num, principles):
   </td></tr>
   <tr><td colspan="3" style="padding:6px 14px;background:#fafaf8;border-bottom:1px solid #ece8e0;">
     <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#c0392b;margin-right:4px;vertical-align:middle;"></span>
-    <span style="font-size:10px;color:#777;margin-right:12px;">扣分（&#8722;1）</span>
+    <span style="font-size:13px;color:#777;margin-right:14px;">扣分（&#8722;1）</span>
     <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#aab8b0;margin-right:4px;vertical-align:middle;"></span>
-    <span style="font-size:10px;color:#777;">无扣分（0）</span>
+    <span style="font-size:13px;color:#777;">无扣分（0）</span>
   </td></tr>
   {blocks}
   <tr><td colspan="3" style="padding:9px 18px;background:#fffdf9;border-top:1px solid #e0dbd4;text-align:center;">
