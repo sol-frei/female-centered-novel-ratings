@@ -198,19 +198,21 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
     if extra_rate > 0 or extra_note:
         extra_rows = f"""
   <tr><td colspan="2" style="padding:12px 20px;border-bottom:1px solid #e0dbd4;">
-    <div style="font-size:16px;color:#c8b89a;letter-spacing:1px;margin-bottom:6px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">额外扣分</div>
-    <div style="font-size:17px;color:#333;line-height:1.7;padding-left:1em;white-space:pre-wrap;">{extra_note}</div>
-    <div style="font-size:12px;color:#b03a2e;font-weight:700;margin-top:3px;font-family:Georgia,serif;text-align:right;">&#8722;{extra_rate:.1f} 分</div>
+    <div style="font-size:15px;color:#c8b89a;letter-spacing:1px;margin-bottom:6px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">额外扣分</div>
+    <div style="font-size:15px;color:#333;line-height:1.6;padding-left:1em;">{extra_note}</div>
+    <div style="font-size:11px;color:#b03a2e;font-weight:700;margin-top:3px;font-family:Georgia,serif;text-align:right;">&#8722;{extra_rate:.1f} 分</div>
   </td></tr>"""
 
     comment_rows = ""
     if comment:
         comment_rows = f"""
   <tr><td colspan="2" style="padding:14px 20px 18px;">
-    <div style="font-size:16px;color:#c8b89a;letter-spacing:1px;margin-bottom:6px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">爱女姐有话说</div>
-    <div style="font-size:17px;color:#222;line-height:1.9;white-space:pre-wrap;">「{comment}」</div>
+    <div style="font-size:15px;color:#c8b89a;letter-spacing:1px;margin-bottom:6px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">爱女姐有话说</div>
+    <div style="font-size:15px;color:#222;line-height:1.9;">「{comment}」</div>
   </td></tr>"""
 
+    # FIX 1: Changed "额外扣分" row border from `2px solid #1a1a1a` to `1px solid #e0dbd4`
+    #         to match the soft divider style used throughout the rest of the card.
     return f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8">{_WEASY_BASE_STYLE}</head><body>
 <table style="background:#fff;border:1px solid #ddd;">
@@ -253,22 +255,22 @@ def build_page1_html(book_name, book_author, book_plate, ich, now,
   </tr>
   <tr>
     <td style="padding:11px 18px;border-right:1px solid #ece8e0;border-bottom:1px solid #ece8e0;width:50%;">
-      <div style="font-size:15px;color:#c8b89a;letter-spacing:1px;margin-bottom:4px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">作品</div>
-      <div style="font-size:17px;font-weight:700;color:#111;text-indent:2em;">{book_name}</div>
+      <div style="font-size:13px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">作品</div>
+      <div style="font-size:13px;font-weight:700;color:#111;">{book_name}</div>
     </td>
     <td style="padding:11px 18px;border-bottom:1px solid #ece8e0;width:50%;">
-      <div style="font-size:15px;color:#c8b89a;letter-spacing:1px;margin-bottom:4px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">作者</div>
-      <div style="font-size:17px;font-weight:700;color:#111;text-indent:2em;">{book_author or "—"}</div>
+      <div style="font-size:13px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">作者</div>
+      <div style="font-size:13px;font-weight:700;color:#111;">{book_author or "—"}</div>
     </td>
   </tr>
   <tr>
     <td style="padding:11px 18px;border-right:1px solid #ece8e0;border-bottom:1px solid #e0dbd4;">
-      <div style="font-size:15px;color:#c8b89a;letter-spacing:1px;margin-bottom:4px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">平台</div>
-      <div style="font-size:17px;font-weight:700;color:#111;text-indent:2em;">{book_plate or "—"}</div>
+      <div style="font-size:13px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">平台</div>
+      <div style="font-size:13px;font-weight:700;color:#111;">{book_plate or "—"}</div>
     </td>
     <td style="padding:11px 18px;border-bottom:1px solid #e0dbd4;">
-      <div style="font-size:15px;color:#c8b89a;letter-spacing:1px;margin-bottom:4px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">评分人 · 日期</div>
-      <div style="font-size:15px;font-weight:600;color:#111;text-indent:2em;">{ich or "—"}<br/>{now}</div>
+      <div style="font-size:13px;color:#c8b89a;letter-spacing:1px;margin-bottom:3px;font-family:'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif;">评分人 · 日期</div>
+      <div style="font-size:12px;font-weight:600;color:#111;">{ich or "—"}<br/>{now}</div>
     </td>
   </tr>
   {extra_rows}
@@ -292,18 +294,19 @@ def build_detail_page_html(book_name, dim_chunks, page_num, principles):
                 '<span style="font-size:11px;color:#ccc;font-family:Georgia,serif;">0</span>'
             )
             remark_html = (
-                f'<div style="margin-top:5px;color:#555;font-size:17px;line-height:1.7;padding-left:2em;white-space:pre-wrap;">{remark_text}</div>'
+                f'<div style="margin-top:4px;color:#555;font-size:12px;line-height:1.6;padding-left:2em;">{remark_text}</div>'
                 if remark_text else ""
             )
             bg = "#fffbfb" if is_deduct else "#fff"
             sep = "#f0eeec" if is_deduct else "#f5f5f5"
+            # FIX 2: removed "p" prefix; number is now color:#7a6a55, font-size:11px, font-weight:600
             rows += f"""
 <tr style="background:{bg};">
   <td style="padding:9px 5px 9px 14px;width:14px;vertical-align:top;border-bottom:1px solid {sep};">
-    <div style="width:8px;height:8px;border-radius:50%;background:{dot_color};margin-top:4px;"></div>
+    <div style="width:7px;height:7px;border-radius:50%;background:{dot_color};margin-top:3px;"></div>
   </td>
-  <td style="padding:9px 5px 9px 0;font-size:17px;color:#2c2c2c;line-height:1.7;vertical-align:top;border-bottom:1px solid {sep};">
-    <span style="color:#7a6a55;font-size:14px;font-weight:600;margin-right:5px;font-family:Georgia,serif;">{i+1}.</span>{principles[i]}{remark_html}
+  <td style="padding:9px 5px 9px 0;font-size:12px;color:#2c2c2c;line-height:1.6;vertical-align:top;border-bottom:1px solid {sep};">
+    <span style="color:#7a6a55;font-size:13px;font-weight:600;margin-right:5px;font-family:Georgia,serif;">{i+1}.</span>{principles[i]}{remark_html}
   </td>
   <td style="padding:9px 14px 9px 5px;text-align:right;vertical-align:top;white-space:nowrap;border-bottom:1px solid {sep};">{badge}</td>
 </tr>"""
