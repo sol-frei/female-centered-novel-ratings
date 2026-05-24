@@ -9,40 +9,14 @@ import streamlit as st
 import pandas as pd
 from principle import principles, dimension_labels
 
+# ── 修复2：移动端/平板默认折叠侧边栏 ──
 st.set_page_config(
     page_title="女主无cp/无男主小说评分",
     page_icon="📖",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="collapsed",   # 华为平板/手机默认折叠，避免遮挡主内容
 )
 
-st.markdown("""
-<style>
-    [data-testid="stAppViewContainer"] {
-        overflow: visible !important;
-    }
-    /* 压掉顶部多余空白 */
-    .block-container {
-        padding-top: 1rem !important;
-    }
-    /* 输入框标签 */
-    .stTextInput label, .stNumberInput label, .stTextArea label {
-        font-size: 17px !important;
-    }
-    /* 输入框内文字 */
-    .stTextInput input, .stNumberInput input, .stTextArea textarea {
-        font-size: 17px !important;
-    }
-    /* 单选按钮文字 */
-    .stRadio label span {
-        font-size: 17px !important;
-    }
-    /* 题目正文（bold的那些） */
-    .stMarkdown p, .stMarkdown strong {
-        font-size: 17px !important;
-    }
-</style>
-""", unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
 # Sidebar
@@ -68,7 +42,7 @@ with st.sidebar:
 for key, default in [
     ("answers",        [None] * 25),
     ("remarks",        [""] * 25),
-    ("impressed_val",  0.0),
+    ("impressed_val",  0.0),           # 由 key= 管理，初始化一次即可
     ("generated_imgs", None),
 ]:
     if key not in st.session_state:
@@ -80,7 +54,7 @@ for key, default in [
 if st.button("⚡ 一键满分"):
     st.session_state["answers"]       = ["没有"] * 22 + ["有"] * 3
     st.session_state["remarks"]       = [""] * 25
-    st.session_state["impressed_val"] = 10.0
+    st.session_state["impressed_val"] = 10.0   # ← key= 方式下，直接改 session_state 即生效
     st.session_state["generated_imgs"] = None
     for i in range(22):
         st.session_state[f"radio_{i}"] = "没有"
@@ -93,14 +67,16 @@ if st.button("⚡ 一键满分"):
 # ─────────────────────────────────────────────
 book_name  = st.text_input("请输入书名：")
 
+# ── 修复1：改用 key= 管理，去掉 value= 参数，彻底解决回弹问题 ──
 impressed_rate = st.number_input(
     "请输入你的印象分*：",
     min_value=0.0,
     max_value=10.0,
     step=1.0,
-    key="impressed_val",
+    key="impressed_val",   # ← 核心修复：用 key 让 Streamlit 自己管理状态，不传 value=
 )
 st.caption("印象分范围：0 ~ 10，谨慎打8分以上，禁止分数膨胀")
+# ← 删掉了原来的 st.session_state["impressed_val"] = impressed_rate（这行导致回弹）
 
 book_author = st.text_input("请输入作者姓名：")
 book_plate  = st.text_input("请输入作品发布平台：")
@@ -108,6 +84,7 @@ ich         = st.text_input("评分人：")
 now         = datetime.now().date()
 
 st.divider()
+
 
 answers = list(st.session_state["answers"])
 remarks = list(st.session_state["remarks"])
@@ -375,10 +352,11 @@ def build_detail_page_html(book_name, dim_chunks, page_num, principles):
 
 
 # ─────────────────────────────────────────────
-# 渲染函数 - 双重保险
+# 修复4：渲染函数 - 双重保险，Playwright 失败自动回退到 html2image
 # ─────────────────────────────────────────────
 
 def html_to_png_bytes_playwright(html_str):
+    """方案A：Playwright（高质量，但可能在部分环境失败）"""
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
         browser = p.chromium.launch(
@@ -398,6 +376,7 @@ def html_to_png_bytes_playwright(html_str):
 
 
 def html_to_png_bytes_html2image(html_str):
+    """方案B：html2image 轻量备选"""
     from html2image import Html2Image
     import tempfile
     hti = Html2Image(size=(430, 800), custom_flags=["--no-sandbox", "--disable-dev-shm-usage"])
@@ -410,6 +389,7 @@ def html_to_png_bytes_html2image(html_str):
 
 
 def html_to_png_bytes(html_str):
+    """自动降级：先尝试 Playwright，失败则用 html2image"""
     try:
         return html_to_png_bytes_playwright(html_str)
     except Exception as e1:
