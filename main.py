@@ -35,15 +35,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 冷启动提示 + 预热渲染库
-if "app_loaded" not in st.session_state:
-    st.session_state["app_loaded"] = True
-    with st.spinner("首次加载中，请稍候约 10 秒…"):
-        try:
-            from playwright.sync_api import sync_playwright
-        except Exception:
-            pass
-
 # ─────────────────────────────────────────────
 # Sidebar
 # ─────────────────────────────────────────────
