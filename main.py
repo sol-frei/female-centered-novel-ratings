@@ -17,6 +17,15 @@ st.set_page_config(
     initial_sidebar_state="collapsed",   # 华为平板/手机默认折叠，避免遮挡主内容
 )
 
+# 强制完整渲染，解决华为平板懒加载问题（不隐藏侧边栏）
+st.markdown("""
+<style>
+    [data-testid="stAppViewContainer"] {
+        overflow: visible !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # ── 修复3：冷启动提示 + 预热渲染库 ──
 if "app_loaded" not in st.session_state:
     st.session_state["app_loaded"] = True
@@ -121,16 +130,22 @@ import streamlit.components.v1 as components
 components.html("""
 <script>
 (function() {
-  function applyTypes() {
-    var radios = window.parent.document.querySelectorAll('[data-testid="stRadio"]');
-    radios.forEach(function(el, idx) {
-      el.setAttribute('data-qi-type', idx < 22 ? 'normal' : 'stance');
-    });
-  }
-  applyTypes();
-  new MutationObserver(applyTypes).observe(
-    window.parent.document.body, {childList:true, subtree:true}
-  );
+  try {
+    function applyTypes() {
+      try {
+        var radios = window.parent.document.querySelectorAll('[data-testid="stRadio"]');
+        radios.forEach(function(el, idx) {
+          el.setAttribute('data-qi-type', idx < 22 ? 'normal' : 'stance');
+        });
+      } catch(e) {}
+    }
+    applyTypes();
+    if (typeof MutationObserver !== 'undefined') {
+      new MutationObserver(applyTypes).observe(
+        window.parent.document.body, {childList:true, subtree:true}
+      );
+    }
+  } catch(e) {}
 })();
 </script>
 """, height=0)
