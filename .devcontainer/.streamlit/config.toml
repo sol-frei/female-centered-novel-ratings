@@ -13,12 +13,3 @@ backgroundColor = "#f7f5f2"
 secondaryBackgroundColor = "#fffdf9"
 textColor = "#1a1a1a"
 
-[server]
-headless = true
-enableCORS = false
-enableXsrfProtection = false
-
-[browser]
-gatherUsageStats = false
-serverAddress = "female-centered-novel-ratings.streamlit.app"
-serverPort = 443
