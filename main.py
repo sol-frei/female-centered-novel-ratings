@@ -9,7 +9,22 @@ import streamlit as st
 import pandas as pd
 from principle import principles, dimension_labels
 
-st.set_page_config(page_title="女主无cp/无男主小说评分", page_icon="📖", layout="wide")
+# ── 修复2：移动端/平板默认折叠侧边栏 ──
+st.set_page_config(
+    page_title="女主无cp/无男主小说评分",
+    page_icon="📖",
+    layout="wide",
+    initial_sidebar_state="collapsed",   # 华为平板/手机默认折叠，避免遮挡主内容
+)
+
+# ── 修复3：冷启动提示 + 预热渲染库 ──
+if "app_loaded" not in st.session_state:
+    st.session_state["app_loaded"] = True
+    with st.spinner("首次加载中，请稍候约 10 秒…"):
+        try:
+            from playwright.sync_api import sync_playwright  # 预热，减少后续延迟
+        except Exception:
+            pass
 
 # ─────────────────────────────────────────────
 # Sidebar
@@ -33,21 +48,21 @@ with st.sidebar:
 # 初始化 session_state
 # ─────────────────────────────────────────────
 for key, default in [
-    ("answers",       [None] * 25),
-    ("remarks",       [""] * 25),
-    ("impressed_val", 0.0),
+    ("answers",        [None] * 25),
+    ("remarks",        [""] * 25),
+    ("impressed_val",  0.0),           # 由 key= 管理，初始化一次即可
     ("generated_imgs", None),
 ]:
     if key not in st.session_state:
         st.session_state[key] = default
-        
+
 # ─────────────────────────────────────────────
 # 一键满分打分
 # ─────────────────────────────────────────────
 if st.button("⚡ 一键满分"):
     st.session_state["answers"]       = ["没有"] * 22 + ["有"] * 3
     st.session_state["remarks"]       = [""] * 25
-    st.session_state["impressed_val"] = 10.0
+    st.session_state["impressed_val"] = 10.0   # ← key= 方式下，直接改 session_state 即生效
     st.session_state["generated_imgs"] = None
     for i in range(22):
         st.session_state[f"radio_{i}"] = "没有"
@@ -61,15 +76,16 @@ if st.button("⚡ 一键满分"):
 # ─────────────────────────────────────────────
 book_name  = st.text_input("请输入书名：")
 
+# ── 修复1：改用 key= 管理，去掉 value= 参数，彻底解决回弹问题 ──
 impressed_rate = st.number_input(
     "请输入你的印象分*：",
     min_value=0.0,
     max_value=10.0,
     step=1.0,
-    value=st.session_state["impressed_val"],
+    key="impressed_val",   # ← 核心修复：用 key 让 Streamlit 自己管理状态，不传 value=
 )
 st.caption("印象分范围：0 ~ 10，谨慎打8分以上，禁止分数膨胀")
-st.session_state["impressed_val"] = impressed_rate
+# ← 删掉了原来的 st.session_state["impressed_val"] = impressed_rate（这行导致回弹）
 
 book_author = st.text_input("请输入作者姓名：")
 book_plate  = st.text_input("请输入作品发布平台：")
@@ -165,7 +181,7 @@ for i, answer in enumerate(answers[:22]):
         deduct_details.append(f"p{i+1}")
 
 for i, answer in enumerate(answers[22:], 22):
-    if answer == n :
+    if answer == n:
         r[i] = -1
         deduct_details.append(f"p{i+1}")
 
@@ -339,16 +355,11 @@ def build_detail_page_html(book_name, dim_chunks, page_num, principles):
 
 
 # ─────────────────────────────────────────────
-# 渲染函数
+# 修复4：渲染函数 - 双重保险，Playwright 失败自动回退到 html2image
 # ─────────────────────────────────────────────
 
-@st.cache_resource
-def get_weasyprint_html_class():
-    from weasyprint import HTML as WeasyprintHTML
-    return WeasyprintHTML
-
-
-def html_to_png_bytes(html_str):
+def html_to_png_bytes_playwright(html_str):
+    """方案A：Playwright（高质量，但可能在部分环境失败）"""
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
         browser = p.chromium.launch(
@@ -365,6 +376,32 @@ def html_to_png_bytes(html_str):
         png = page.screenshot(full_page=False)
         browser.close()
     return png
+
+
+def html_to_png_bytes_html2image(html_str):
+    """方案B：html2image 轻量备选"""
+    from html2image import Html2Image
+    import tempfile
+    hti = Html2Image(size=(430, 800), custom_flags=["--no-sandbox", "--disable-dev-shm-usage"])
+    with tempfile.TemporaryDirectory() as tmpdir:
+        hti.output_path = tmpdir
+        hti.screenshot(html_str=html_str, save_as="out.png")
+        out_path = os.path.join(tmpdir, "out.png")
+        with open(out_path, "rb") as f:
+            return f.read()
+
+
+def html_to_png_bytes(html_str):
+    """自动降级：先尝试 Playwright，失败则用 html2image"""
+    try:
+        return html_to_png_bytes_playwright(html_str)
+    except Exception as e1:
+        try:
+            return html_to_png_bytes_html2image(html_str)
+        except Exception as e2:
+            st.error(f"图片生成失败。\nPlaywright 错误：{e1}\nhtml2image 错误：{e2}")
+            return None
+
 
 # ─────────────────────────────────────────────
 # 生成图片按钮
