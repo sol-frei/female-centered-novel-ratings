@@ -92,20 +92,16 @@ remarks = list(st.session_state["remarks"])
 # ─────────────────────────────────────────────
 st.markdown("""
 <style>
-[data-qi-type="normal"] [data-baseweb="radio"]:nth-of-type(1)[aria-checked="true"] svg circle:last-child
-    { fill: #e53935 !important; }
-[data-qi-type="normal"] [data-baseweb="radio"]:nth-of-type(2)[aria-checked="true"] svg circle:last-child
-    { fill: #2e7d32 !important; }
-[data-qi-type="stance"] [data-baseweb="radio"]:nth-of-type(1)[aria-checked="true"] svg circle:last-child
-    { fill: #2e7d32 !important; }
-[data-qi-type="stance"] [data-baseweb="radio"]:nth-of-type(2)[aria-checked="true"] svg circle:last-child
-    { fill: #e53935 !important; }
-
-/* ── 移动端横向溢出修复 ── */
+/* ── 强制页面从顶部开始，修复夸克/华为浏览器首屏偏移 ── */
 html, body {
     overflow-x: hidden !important;
+    scroll-behavior: auto !important;
+}
+.main {
+    padding-top: 0 !important;
 }
 .main .block-container {
+    padding-top: 1rem !important;
     padding-left: 1rem !important;
     padding-right: 1rem !important;
     max-width: 100% !important;
@@ -146,31 +142,6 @@ label[data-testid="stWidgetLabel"] p {
 </style>
 """, unsafe_allow_html=True)
 
-
-import streamlit.components.v1 as components
-components.html("""
-<script>
-(function() {
-  try {
-    function applyTypes() {
-      try {
-        var radios = window.parent.document.querySelectorAll('[data-testid="stRadio"]');
-        radios.forEach(function(el, idx) {
-          el.setAttribute('data-qi-type', idx < 22 ? 'normal' : 'stance');
-        });
-      } catch(e) {}
-    }
-    applyTypes();
-    if (typeof MutationObserver !== 'undefined') {
-      new MutationObserver(applyTypes).observe(
-        window.parent.document.body, {childList:true, subtree:true}
-      );
-    }
-  } catch(e) {}
-})();
-</script>
-""", height=0)
-
 # ─────────────────────────────────────────────
 # 按维度打分
 # ─────────────────────────────────────────────
@@ -185,12 +156,10 @@ for dim_name, start, end in dimensions:
     st.subheader(dim_name)
     for i in range(start, end):
         st.markdown(f"**{i+1}、{principles[i]}**")
-        col_radio, col_empty = st.columns([2, 5])
-        with col_radio:
-            q = st.radio("", ["有", "没有"],
-                         key=f"radio_{i}", label_visibility="collapsed", horizontal=True,
-                         index=None)
-            answers[i] = q
+        q = st.radio("", ["有", "没有"],
+                     key=f"radio_{i}", label_visibility="collapsed", horizontal=True,
+                     index=None)
+        answers[i] = q
         remarks[i] = st.text_area("备注", value=remarks[i],
                                    key=f"remark_{i}", label_visibility="collapsed",
                                    placeholder="备注")
