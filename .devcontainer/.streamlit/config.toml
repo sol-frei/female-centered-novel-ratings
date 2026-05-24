@@ -1,0 +1,14 @@
+[server]
+headless = true
+enableCORS = false
+enableXsrfProtection = false
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+# 可选：统一主题色，避免平台默认主题干扰
+primaryColor = "#c8b89a"
+backgroundColor = "#f7f5f2"
+secondaryBackgroundColor = "#fffdf9"
+textColor = "#1a1a1a"
