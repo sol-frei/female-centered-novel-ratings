@@ -21,15 +21,24 @@ st.markdown("""
     [data-testid="stAppViewContainer"] {
         overflow: visible !important;
     }
-    /* 全局字体放大到17px */
-    html, body, [class*="css"] {
+    /* 压掉顶部多余空白 */
+    .block-container {
+        padding-top: 1rem !important;
+    }
+    /* 输入框标签 */
+    .stTextInput label, .stNumberInput label, .stTextArea label {
         font-size: 17px !important;
     }
-    .stTextInput label, .stNumberInput label, .stTextArea label,
-    .stRadio label, .stMarkdown, .stCaption, p, div {
+    /* 输入框内文字 */
+    .stTextInput input, .stNumberInput input, .stTextArea textarea {
         font-size: 17px !important;
     }
-    .stButton > button {
+    /* 单选按钮文字 */
+    .stRadio label span {
+        font-size: 17px !important;
+    }
+    /* 题目正文（bold的那些） */
+    .stMarkdown p, .stMarkdown strong {
         font-size: 17px !important;
     }
 </style>
