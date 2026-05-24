@@ -102,6 +102,36 @@ st.markdown("""
     { fill: #2e7d32 !important; }
 [data-qi-type="stance"] [data-baseweb="radio"]:nth-of-type(2)[aria-checked="true"] svg circle:last-child
     { fill: #e53935 !important; }
+
+/* ── 手机端字体放大 ── */
+html, body, [class*="css"] {
+    font-size: 18px !important;
+}
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] strong {
+    font-size: 18px !important;
+    line-height: 1.6 !important;
+}
+[data-testid="stHeadingWithActionElements"] h3 {
+    font-size: 18px !important;
+}
+[data-baseweb="radio"] label span {
+    font-size: 18px !important;
+}
+input, textarea {
+    font-size: 18px !important;
+}
+label[data-testid="stWidgetLabel"] p {
+    font-size: 18px !important;
+}
+[data-testid="stCaptionContainer"] p {
+    font-size: 15px !important;
+}
+[data-testid="stButton"] button {
+    font-size: 18px !important;
+    padding: 0.5em 1.2em !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
