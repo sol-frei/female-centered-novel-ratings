@@ -70,6 +70,9 @@ if st.button("⚡ 一键满分"):
         st.session_state[f"radio_{i}"] = "有"
     st.rerun()
 
+# 强制触发完整渲染，解决华为平板懒加载问题
+st.empty()
+st.markdown("---")
 
 # ─────────────────────────────────────────────
 # 书目信息
