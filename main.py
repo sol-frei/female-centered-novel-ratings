@@ -113,7 +113,7 @@ html, body, [class*="css"] {
     line-height: 1.6 !important;
 }
 [data-testid="stHeadingWithActionElements"] h3 {
-    font-size: 18px !important;
+    font-size: 22px !important;
 }
 [data-baseweb="radio"] label span {
     font-size: 18px !important;
@@ -131,9 +131,12 @@ label[data-testid="stWidgetLabel"] p {
     font-size: 18px !important;
     padding: 0.5em 1.2em !important;
 }
-
+[data-testid="stSidebar"] * {
+    font-size: 17px !important;
+}
 </style>
 """, unsafe_allow_html=True)
+
 
 import streamlit.components.v1 as components
 components.html("""
